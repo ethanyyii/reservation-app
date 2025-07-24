@@ -95,6 +95,67 @@
             border: 1px solid #fecaca;
         }
         
+        /* 快速預約按鈕區域 */
+        .quick-booking-section {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+            border: 2px solid #f59e0b;
+        }
+        
+        .quick-booking-title {
+            font-size: 16px;
+            color: #92400e;
+            margin-bottom: 12px;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .name-buttons-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 6px;
+        }
+        
+        .name-btn {
+            background: linear-gradient(135deg, #ffffff 0%, #fef3c7 100%);
+            border: 1px solid #f59e0b;
+            border-radius: 6px;
+            padding: 8px 4px;
+            font-size: 11px;
+            color: #92400e;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            font-weight: 600;
+            min-height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1.2;
+        }
+        
+        .name-btn:hover {
+            background: linear-gradient(135deg, #fde68a 0%, #fbbf24 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3);
+            color: #78350f;
+        }
+        
+        .name-btn:active {
+            transform: translateY(0);
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+        }
+        
+        .name-btn:disabled {
+            background: #d1d5db;
+            color: #6b7280;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
         .form-section {
             background: linear-gradient(90deg, #f0f9ff 0%, #e0f2fe 100%);
             border-radius: 12px;
@@ -108,55 +169,6 @@
             margin-bottom: 16px;
             color: #1e40af;
             text-align: center;
-        }
-        
-        /* 快速選擇按鈕區域 */
-        .quick-select-section {
-            margin-bottom: 20px;
-        }
-        
-        .quick-select-title {
-            font-size: 14px;
-            color: #374151;
-            margin-bottom: 12px;
-            text-align: center;
-            font-weight: 500;
-        }
-        
-        .name-buttons-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 6px;
-            margin-bottom: 20px;
-        }
-        
-        .name-btn {
-            background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%);
-            border: 1px solid #bfdbfe;
-            border-radius: 6px;
-            padding: 6px 2px;
-            font-size: 11px;
-            color: #1e40af;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-align: center;
-            font-weight: 500;
-            min-height: 28px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            line-height: 1.2;
-        }
-        
-        .name-btn:hover {
-            background: linear-gradient(135deg, #bfdbfe 0%, #dbeafe 100%);
-            transform: translateY(-1px);
-            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
-        }
-        
-        .name-btn:active {
-            transform: translateY(0);
-            background: linear-gradient(135deg, #93c5fd 0%, #bfdbfe 100%);
         }
         
         .input-group {
@@ -322,7 +334,8 @@
             
             .name-btn {
                 font-size: 10px;
-                min-height: 26px;
+                min-height: 28px;
+                padding: 6px 2px;
             }
         }
     </style>
@@ -342,39 +355,39 @@
                 🟡 正在連接...
             </div>
 
+            <!-- 快速預約按鈕區域 -->
+            <div class="quick-booking-section">
+                <div class="quick-booking-title">👥 快速預約球友</div>
+                <div class="name-buttons-grid" id="nameButtonsGrid">
+                    <button class="name-btn" onclick="quickBooking('黃老師')">黃老師</button>
+                    <button class="name-btn" onclick="quickBooking('阿平')">阿平</button>
+                    <button class="name-btn" onclick="quickBooking('我')">我</button>
+                    <button class="name-btn" onclick="quickBooking('皮')">皮</button>
+                    <button class="name-btn" onclick="quickBooking('張清文')">張清文</button>
+                    <button class="name-btn" onclick="quickBooking('文姿')">文姿</button>
+                    <button class="name-btn" onclick="quickBooking('智宇')">智宇</button>
+                    <button class="name-btn" onclick="quickBooking('克拉克')">克拉克</button>
+                    <button class="name-btn" onclick="quickBooking('Ben')">Ben</button>
+                    <button class="name-btn" onclick="quickBooking('雄')">雄</button>
+                    <button class="name-btn" onclick="quickBooking('明正')">明正</button>
+                    <button class="name-btn" onclick="quickBooking('曜竹')">曜竹</button>
+                    <button class="name-btn" onclick="quickBooking('阿生')">阿生</button>
+                    <button class="name-btn" onclick="quickBooking('哲維')">哲維</button>
+                    <button class="name-btn" onclick="quickBooking('查理王')">查理王</button>
+                    <button class="name-btn" onclick="quickBooking('🦅')">🦅</button>
+                    <button class="name-btn" onclick="quickBooking('皮')">皮</button>
+                    <button class="name-btn" onclick="quickBooking('曜竹')">曜竹</button>
+                    <button class="name-btn" onclick="quickBooking('怡姍')">怡姍</button>
+                    <button class="name-btn" onclick="quickBooking('控')">控</button>
+                    <button class="name-btn" onclick="quickBooking('彥皓')">彥皓</button>
+                    <button class="name-btn" onclick="quickBooking('海哥')">海哥</button>
+                    <button class="name-btn" onclick="quickBooking('阿嘉')">阿嘉</button>
+                    <button class="name-btn" onclick="quickBooking('許')">許</button>
+                </div>
+            </div>
+
             <div class="form-section">
                 <h2 class="section-title">臨打報名（晚上8點後未滿17人才開放）</h2>
-                
-                <!-- 快速選擇球友名字 -->
-                <div class="quick-select-section">
-                    <div class="quick-select-title">👥 會員</div>
-                    <div class="name-buttons-grid" id="nameButtonsGrid">
-                        <button class="name-btn" onclick="selectName('黃老師')">黃老師</button>
-                        <button class="name-btn" onclick="selectName('阿平')">阿平</button>
-                        <button class="name-btn" onclick="selectName('我')">我</button>
-                        <button class="name-btn" onclick="selectName('皮')">皮</button>
-                        <button class="name-btn" onclick="selectName('張清文')">張清文</button>
-                        <button class="name-btn" onclick="selectName('文姿')">文姿</button>
-                        <button class="name-btn" onclick="selectName('智宇')">智宇</button>
-                        <button class="name-btn" onclick="selectName('克拉克')">克拉克</button>
-                        <button class="name-btn" onclick="selectName('Ben')">Ben</button>
-                        <button class="name-btn" onclick="selectName('雄')">雄</button>
-                        <button class="name-btn" onclick="selectName('明正')">明正</button>
-                        <button class="name-btn" onclick="selectName('曜竹')">曜竹</button>
-                        <button class="name-btn" onclick="selectName('阿生')">阿生</button>
-                        <button class="name-btn" onclick="selectName('哲維')">哲維</button>
-                        <button class="name-btn" onclick="selectName('查理王')">查理王</button>
-                        <button class="name-btn" onclick="selectName('🦅')">🦅</button>
-                        <button class="name-btn" onclick="selectName('皮')">皮</button>
-                        <button class="name-btn" onclick="selectName('曜竹')">曜竹</button>
-                        <button class="name-btn" onclick="selectName('怡姍')">怡姍</button>
-                        <button class="name-btn" onclick="selectName('控')">控</button>
-                        <button class="name-btn" onclick="selectName('彥皓')">彥皓</button>
-                        <button class="name-btn" onclick="selectName('海哥')">海哥</button>
-                        <button class="name-btn" onclick="selectName('阿嘉')">阿嘉</button>
-                        <button class="name-btn" onclick="selectName('許')">許</button>
-                    </div>
-                </div>
                 
                 <div class="input-group">
                     <input type="text" id="playerName" placeholder="請輸入你的姓名" maxlength="20" />
@@ -413,33 +426,80 @@
         let isOnline = false;
         let nextGameInfo = null;
 
-        // 新增：快速選擇姓名功能
-        function selectName(name) {
-            const playerNameInput = document.getElementById('playerName');
-            playerNameInput.value = name;
-            playerNameInput.focus();
+        // 新增：快速預約功能
+        async function quickBooking(name) {
+            console.log('⚡ 快速預約:', name);
             
-            // 添加視覺反饋
-            playerNameInput.style.borderColor = '#10b981';
-            setTimeout(() => {
-                playerNameInput.style.borderColor = '#3b82f6';
-            }, 500);
+            if (!isOnline) {
+                alert('目前離線，無法預約');
+                return;
+            }
+
+            // 找到對應的按鈕並暫時禁用
+            const buttons = document.querySelectorAll('.name-btn');
+            const targetButton = Array.from(buttons).find(btn => btn.textContent === name);
+            if (targetButton) {
+                targetButton.disabled = true;
+                targetButton.style.opacity = '0.6';
+            }
+
+            try {
+                const response = await apiRequest('/bookings', {
+                    method: 'POST',
+                    body: JSON.stringify({ name: name })
+                });
+
+                await loadBookings();
+                alert(`${name} 預約成功！`);
+
+            } catch (error) {
+                console.error('快速預約失敗:', error.message);
+                
+                if (error.message.includes('400')) {
+                    alert(`${name} 已經預約過了！`);
+                } else {
+                    alert(`${name} 預約失敗，請重試`);
+                }
+                
+                updateConnectionStatus(false, '預約失敗');
+            } finally {
+                // 重新啟用按鈕
+                if (targetButton) {
+                    targetButton.disabled = false;
+                    targetButton.style.opacity = '1';
+                }
+            }
         }
 
         function updateConnectionStatus(online, message = '') {
             isOnline = online;
             const statusElement = document.getElementById('connectionStatus');
             const bookingBtn = document.getElementById('bookingBtn');
+            const nameButtons = document.querySelectorAll('.name-btn');
             
             if (online) {
                 statusElement.className = 'connection-status status-online';
                 statusElement.textContent = '🟢 系統已連線';
                 bookingBtn.disabled = false;
+                
+                // 啟用快速預約按鈕
+                nameButtons.forEach(btn => {
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                });
+                
                 console.log('✅ 連線成功');
             } else {
                 statusElement.className = 'connection-status status-offline';
                 statusElement.textContent = '🔴 連線中斷' + (message ? ' - ' + message : '');
                 bookingBtn.disabled = true;
+                
+                // 禁用快速預約按鈕
+                nameButtons.forEach(btn => {
+                    btn.disabled = true;
+                    btn.style.opacity = '0.5';
+                });
+                
                 console.log('❌ 連線失敗:', message);
             }
         }
@@ -682,7 +742,7 @@
 
         // 使函數全域可用
         window.cancelBooking = cancelBooking;
-        window.selectName = selectName;
+        window.quickBooking = quickBooking;
         
         console.log('📜 羅羽翔鷹隊預約系統腳本載入完成');
     </script>
