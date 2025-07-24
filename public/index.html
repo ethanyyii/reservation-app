@@ -110,6 +110,55 @@
             text-align: center;
         }
         
+        /* 快速選擇按鈕區域 */
+        .quick-select-section {
+            margin-bottom: 20px;
+        }
+        
+        .quick-select-title {
+            font-size: 14px;
+            color: #374151;
+            margin-bottom: 12px;
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        .name-buttons-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 6px;
+            margin-bottom: 20px;
+        }
+        
+        .name-btn {
+            background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%);
+            border: 1px solid #bfdbfe;
+            border-radius: 6px;
+            padding: 6px 2px;
+            font-size: 11px;
+            color: #1e40af;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            font-weight: 500;
+            min-height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1.2;
+        }
+        
+        .name-btn:hover {
+            background: linear-gradient(135deg, #bfdbfe 0%, #dbeafe 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+        }
+        
+        .name-btn:active {
+            transform: translateY(0);
+            background: linear-gradient(135deg, #93c5fd 0%, #bfdbfe 100%);
+        }
+        
         .input-group {
             margin-bottom: 20px;
         }
@@ -270,6 +319,11 @@
             .cancel-btn {
                 margin-left: 0;
             }
+            
+            .name-btn {
+                font-size: 10px;
+                min-height: 26px;
+            }
         }
     </style>
 </head>
@@ -290,6 +344,37 @@
 
             <div class="form-section">
                 <h2 class="section-title">臨打報名（晚上8點後未滿17人才開放）</h2>
+                
+                <!-- 快速選擇球友名字 -->
+                <div class="quick-select-section">
+                    <div class="quick-select-title">👥 快速選擇球友</div>
+                    <div class="name-buttons-grid" id="nameButtonsGrid">
+                        <button class="name-btn" onclick="selectName('黃老師')">黃老師</button>
+                        <button class="name-btn" onclick="selectName('阿平')">阿平</button>
+                        <button class="name-btn" onclick="selectName('我')">我</button>
+                        <button class="name-btn" onclick="selectName('皮')">皮</button>
+                        <button class="name-btn" onclick="selectName('張清文')">張清文</button>
+                        <button class="name-btn" onclick="selectName('文姿')">文姿</button>
+                        <button class="name-btn" onclick="selectName('智宇')">智宇</button>
+                        <button class="name-btn" onclick="selectName('克拉克')">克拉克</button>
+                        <button class="name-btn" onclick="selectName('Ben')">Ben</button>
+                        <button class="name-btn" onclick="selectName('雄')">雄</button>
+                        <button class="name-btn" onclick="selectName('明正')">明正</button>
+                        <button class="name-btn" onclick="selectName('曜竹')">曜竹</button>
+                        <button class="name-btn" onclick="selectName('阿生')">阿生</button>
+                        <button class="name-btn" onclick="selectName('哲維')">哲維</button>
+                        <button class="name-btn" onclick="selectName('查理王')">查理王</button>
+                        <button class="name-btn" onclick="selectName('🦅')">🦅</button>
+                        <button class="name-btn" onclick="selectName('皮')">皮</button>
+                        <button class="name-btn" onclick="selectName('曜竹')">曜竹</button>
+                        <button class="name-btn" onclick="selectName('怡姍')">怡姍</button>
+                        <button class="name-btn" onclick="selectName('棟成')">棟成</button>
+                        <button class="name-btn" onclick="selectName('彥皓')">彥皓</button>
+                        <button class="name-btn" onclick="selectName('海哥')">海哥</button>
+                        <button class="name-btn" onclick="selectName('阿嘉')">阿嘉</button>
+                        <button class="name-btn" onclick="selectName('許')">許</button>
+                    </div>
+                </div>
                 
                 <div class="input-group">
                     <input type="text" id="playerName" placeholder="請輸入你的姓名" maxlength="20" />
@@ -327,6 +412,19 @@
         let bookings = [];
         let isOnline = false;
         let nextGameInfo = null;
+
+        // 新增：快速選擇姓名功能
+        function selectName(name) {
+            const playerNameInput = document.getElementById('playerName');
+            playerNameInput.value = name;
+            playerNameInput.focus();
+            
+            // 添加視覺反饋
+            playerNameInput.style.borderColor = '#10b981';
+            setTimeout(() => {
+                playerNameInput.style.borderColor = '#3b82f6';
+            }, 500);
+        }
 
         function updateConnectionStatus(online, message = '') {
             isOnline = online;
@@ -386,7 +484,6 @@
                 
                 nextGameInfoElement.textContent = displayText;
                 
-                // 更新按鈕文字 - 修改這裡
                 const bookingBtn = document.getElementById('bookingBtn');
                 bookingBtn.innerHTML = '立即預約';
                 
@@ -445,7 +542,6 @@
                 console.error('預約失敗:', error.message);
                 
                 if (error.message.includes('400')) {
-                    // 可能是重複預約
                     try {
                         const errorResponse = await error.response?.json();
                         alert(errorResponse?.message || '預約失敗：可能已經預約過了');
@@ -503,7 +599,6 @@
             bookingTable.className = 'booking-table';
             emptyState.className = 'empty-state hidden';
 
-            // 按創建時間排序
             const sortedBookings = [...bookings].sort((a, b) => 
                 new Date(a.createdAt) - new Date(b.createdAt)
             );
@@ -585,7 +680,9 @@
             initializeApp();
         }
 
+        // 使函數全域可用
         window.cancelBooking = cancelBooking;
+        window.selectName = selectName;
         
         console.log('📜 羅羽翔鷹隊預約系統腳本載入完成');
     </script>
