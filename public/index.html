@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>羅羽翔鷹隊</title>
+    <title>🏸 羅羽翔鷹隊</title>
     <style>
         * {
             box-sizing: border-box;
@@ -276,10 +276,10 @@
 <body>
     <div class="container">
         <div class="card">
-            <h1 class="title">翔鷹羽球隊</h1>
+            <h1 class="title">🏸 羅羽翔鷹隊</h1>
 
             <div id="nextGameSection" class="next-game-section">
-                <div class="next-game-title">📅 下一場羽球</div>
+                <div class="next-game-title">可預約場次</div>
                 <div id="nextGameInfo" class="next-game-info">載入中...</div>
                 <div id="nextGameTime" class="next-game-time">上午9:00-12:00</div>
             </div>
@@ -289,14 +289,14 @@
             </div>
 
             <div class="form-section">
-                <h2 class="section-title">👤 快速預約</h2>
+                <h2 class="section-title">立即預約</h2>
                 
                 <div class="input-group">
                     <input type="text" id="playerName" placeholder="請輸入你的姓名" maxlength="20" />
                 </div>
                 
                 <button type="button" class="btn" id="bookingBtn" disabled>
-                    🏸 預約下一場羽球
+                    可預約場次
                 </button>
             </div>
 
@@ -312,14 +312,14 @@
             </div>
 
             <div id="emptyState" class="empty-state">
-                <p>🏸 目前沒有人預約</p>
+                <p>目前沒有人預約</p>
                 <p>成為第一個預約的球友吧！</p>
             </div>
         </div>
     </div>
 
     <script>
-        console.log('🏸 智能羽球預約系統正在啟動...');
+        console.log('🏸 羅羽翔鷹隊預約系統正在啟動...');
         
         const API_BASE_URL = window.location.origin + '/api';
         console.log('API Base URL:', API_BASE_URL);
@@ -389,8 +389,8 @@
                 // 更新按鈕文字
                 const bookingBtn = document.getElementById('bookingBtn');
                 bookingBtn.innerHTML = nextGameInfo.isToday ? 
-                    '🏸 預約今天的羽球' : 
-                    '🏸 預約下一場羽球';
+                    '可預約場次 (今天)' : 
+                    '可預約場次';
                 
                 console.log('📅 下一場羽球:', nextGameInfo);
             } catch (error) {
@@ -574,7 +574,7 @@
                 await loadBookings();
                 startPeriodicSync();
                 
-                console.log('✅ 智能羽球預約系統初始化完成');
+                console.log('✅ 羅羽翔鷹隊預約系統初始化完成');
             } catch (error) {
                 console.error('初始化失敗:', error);
                 updateConnectionStatus(false, '初始化失敗');
@@ -589,7 +589,7 @@
 
         window.cancelBooking = cancelBooking;
         
-        console.log('📜 智能羽球預約系統腳本載入完成');
+        console.log('📜 羅羽翔鷹隊預約系統腳本載入完成');
     </script>
 </body>
 </html>
