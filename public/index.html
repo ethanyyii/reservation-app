@@ -386,11 +386,9 @@
                 
                 nextGameInfoElement.textContent = displayText;
                 
-                // 更新按鈕文字
+                // 更新按鈕文字 - 修改這裡
                 const bookingBtn = document.getElementById('bookingBtn');
-                bookingBtn.innerHTML = nextGameInfo.isToday ? 
-                    '可預約場次 (今天)' : 
-                    '可預約場次';
+                bookingBtn.innerHTML = '立即預約';
                 
                 console.log('📅 下一場羽球:', nextGameInfo);
             } catch (error) {
