@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>球友預約系統</title>
+    <title>智能羽球預約系統</title>
     <style>
         * {
             box-sizing: border-box;
@@ -14,7 +14,7 @@
             margin: 0;
             padding: 0;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #dbeafe 0%, #dcfce7 100%);
+            background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%);
             min-height: 100vh;
             font-size: 16px;
             line-height: 1.5;
@@ -38,8 +38,40 @@
             font-size: 24px;
             font-weight: bold;
             text-align: center;
-            color: #1f2937;
+            color: #1e40af;
             margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .next-game-section {
+            background: linear-gradient(135deg, #dbeafe 0%, #e0f2fe 100%);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+            text-align: center;
+            border: 2px solid #3b82f6;
+        }
+        
+        .next-game-title {
+            font-size: 16px;
+            color: #1e40af;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        .next-game-info {
+            font-size: 20px;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 4px;
+        }
+        
+        .next-game-time {
+            font-size: 16px;
+            color: #6b7280;
         }
         
         .connection-status {
@@ -63,14 +95,8 @@
             border: 1px solid #fecaca;
         }
         
-        .status-connecting {
-            background: #fef3c7;
-            color: #92400e;
-            border: 1px solid #fde68a;
-        }
-        
         .form-section {
-            background: linear-gradient(90deg, #dbeafe 0%, #dcfce7 100%);
+            background: linear-gradient(90deg, #f0f9ff 0%, #e0f2fe 100%);
             border-radius: 12px;
             padding: 20px;
             margin-bottom: 24px;
@@ -80,31 +106,23 @@
             font-size: 18px;
             font-weight: 600;
             margin-bottom: 16px;
-            color: #374151;
+            color: #1e40af;
+            text-align: center;
         }
         
         .input-group {
-            margin-bottom: 16px;
-        }
-        
-        .input-row {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-        
-        .input-row input {
-            flex: 1;
+            margin-bottom: 20px;
         }
         
         input {
             width: 100%;
             padding: 16px;
-            border: 2px solid #d1d5db;
+            border: 2px solid #bfdbfe;
             border-radius: 8px;
-            font-size: 16px;
+            font-size: 18px;
             background: white;
             transition: border-color 0.2s;
+            text-align: center;
         }
         
         input:focus {
@@ -115,25 +133,33 @@
         
         .btn {
             width: 100%;
-            padding: 16px;
-            background: linear-gradient(90deg, #2563eb 0%, #1d4ed8 100%);
+            padding: 20px;
+            background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%);
             color: white;
             border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 700;
             cursor: pointer;
-            min-height: 48px;
+            min-height: 60px;
             transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
         
         .btn:hover {
             background: linear-gradient(90deg, #1d4ed8 0%, #1e40af 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
         }
         
         .btn:disabled {
             background: #9ca3af;
             cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
         
         .stats-section {
@@ -144,7 +170,7 @@
         }
         
         .stats-content {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: bold;
             color: #1f2937;
             text-align: center;
@@ -159,16 +185,17 @@
         }
         
         .table-header {
-            background: #f9fafb;
+            background: #f8fafc;
             padding: 16px;
             border-bottom: 1px solid #e5e7eb;
             font-weight: 600;
             text-align: center;
+            color: #1e40af;
         }
         
         .booking-item {
-            padding: 20px;
-            border-bottom: 1px solid #f3f4f6;
+            padding: 16px 20px;
+            border-bottom: 1px solid #f1f5f9;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -176,6 +203,11 @@
         
         .booking-item:last-child {
             border-bottom: none;
+        }
+        
+        .booking-item.today {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
         }
         
         .booking-info {
@@ -199,8 +231,8 @@
             color: white;
             border: none;
             border-radius: 6px;
-            padding: 8px 16px;
-            font-size: 14px;
+            padding: 8px 12px;
+            font-size: 12px;
             cursor: pointer;
             margin-left: 12px;
             transition: background 0.2s;
@@ -244,63 +276,58 @@
 <body>
     <div class="container">
         <div class="card">
-            <h1 class="title">🏀 球友預約系統</h1>
+            <h1 class="title">🏸 智能羽球預約系統</h1>
 
-            <div id="connectionStatus" class="connection-status status-connecting">
-                🟡 正在連接伺服器...
+            <div id="nextGameSection" class="next-game-section">
+                <div class="next-game-title">📅 下一場羽球</div>
+                <div id="nextGameInfo" class="next-game-info">載入中...</div>
+                <div id="nextGameTime" class="next-game-time">上午9:00-12:00</div>
+            </div>
+
+            <div id="connectionStatus" class="connection-status status-offline">
+                🟡 正在連接...
             </div>
 
             <div class="form-section">
-                <h2 class="section-title">新增預約</h2>
+                <h2 class="section-title">👤 快速預約</h2>
                 
                 <div class="input-group">
-                    <input type="text" id="playerName" placeholder="球友姓名" />
-                </div>
-                
-                <div class="input-row">
-                    <input type="number" id="month" placeholder="月份 (1-12)" min="1" max="12" />
-                    <input type="number" id="day" placeholder="日期 (1-31)" min="1" max="31" />
-                </div>
-                
-                <div class="input-group">
-                    <input type="time" id="time" />
+                    <input type="text" id="playerName" placeholder="請輸入你的姓名" maxlength="20" />
                 </div>
                 
                 <button type="button" class="btn" id="bookingBtn" disabled>
-                    預約
+                    🏸 預約下一場羽球
                 </button>
             </div>
 
             <div class="stats-section">
                 <div class="stats-content">
-                    線上預約人數：<span id="totalCount">0</span> 人
+                    已預約人數：<span id="totalCount">0</span> 人
                 </div>
             </div>
 
             <div id="bookingTable" class="booking-table hidden">
-                <div class="table-header">即時預約清單</div>
+                <div class="table-header">🏸 羽球預約清單</div>
                 <div id="bookingList"></div>
             </div>
 
             <div id="emptyState" class="empty-state">
-                <p>目前沒有預約記錄</p>
+                <p>🏸 目前沒有人預約</p>
                 <p>成為第一個預約的球友吧！</p>
             </div>
         </div>
     </div>
 
     <script>
-        console.log('🏀 球友預約系統正在啟動...');
+        console.log('🏸 智能羽球預約系統正在啟動...');
         
-        // API 配置
         const API_BASE_URL = window.location.origin + '/api';
         console.log('API Base URL:', API_BASE_URL);
         
-        // 全域變數
         let bookings = [];
         let isOnline = false;
+        let nextGameInfo = null;
 
-        // 更新連線狀態
         function updateConnectionStatus(online, message = '') {
             isOnline = online;
             const statusElement = document.getElementById('connectionStatus');
@@ -308,7 +335,7 @@
             
             if (online) {
                 statusElement.className = 'connection-status status-online';
-                statusElement.textContent = '🟢 已連線 - 即時同步';
+                statusElement.textContent = '🟢 系統已連線';
                 bookingBtn.disabled = false;
                 console.log('✅ 連線成功');
             } else {
@@ -319,10 +346,9 @@
             }
         }
 
-        // API 請求函數
         async function apiRequest(endpoint, options = {}) {
             const url = `${API_BASE_URL}${endpoint}`;
-            console.log('🌐 API 請求:', url, options);
+            console.log('🌐 API 請求:', url);
             
             try {
                 const response = await fetch(url, {
@@ -341,7 +367,6 @@
                 }
                 
                 const data = await response.json();
-                console.log('📦 API 回應數據:', data);
                 return data;
             } catch (error) {
                 console.error('💥 API 請求失敗:', error);
@@ -349,7 +374,30 @@
             }
         }
 
-        // 載入所有預約
+        async function loadNextGame() {
+            try {
+                const data = await apiRequest('/next-game');
+                nextGameInfo = data.nextGame;
+                
+                const nextGameInfoElement = document.getElementById('nextGameInfo');
+                const displayText = nextGameInfo.isToday ? 
+                    `今天 ${nextGameInfo.dateString} (${nextGameInfo.dayName})` :
+                    `${nextGameInfo.dayName} ${nextGameInfo.dateString}`;
+                
+                nextGameInfoElement.textContent = displayText;
+                
+                // 更新按鈕文字
+                const bookingBtn = document.getElementById('bookingBtn');
+                bookingBtn.innerHTML = nextGameInfo.isToday ? 
+                    '🏸 預約今天的羽球' : 
+                    '🏸 預約下一場羽球';
+                
+                console.log('📅 下一場羽球:', nextGameInfo);
+            } catch (error) {
+                console.error('載入下一場羽球失敗:', error);
+            }
+        }
+
         async function loadBookings() {
             console.log('📥 正在載入預約...');
             try {
@@ -364,73 +412,58 @@
             }
         }
 
-        // 新增預約
         async function addBooking() {
             console.log('➕ 開始新增預約...');
             
             if (!isOnline) {
-                alert('目前離線，無法新增預約');
+                alert('目前離線，無法預約');
+                return;
+            }
+
+            const name = document.getElementById('playerName').value?.trim();
+            
+            if (!name) {
+                alert('請輸入你的姓名');
+                document.getElementById('playerName').focus();
+                return;
+            }
+
+            if (name.length > 20) {
+                alert('姓名不能超過20個字');
                 return;
             }
 
             try {
-                const name = document.getElementById('playerName').value?.trim();
-                const month = document.getElementById('month').value;
-                const day = document.getElementById('day').value;
-                const time = document.getElementById('time').value;
-
-                console.log('📝 預約資料:', { name, month, day, time });
-
-                // 驗證輸入
-                if (!name || !month || !day || !time) {
-                    alert('請填寫所有欄位');
-                    return;
-                }
-
-                const monthNum = parseInt(month);
-                const dayNum = parseInt(day);
-                
-                if (monthNum < 1 || monthNum > 12) {
-                    alert('月份必須在1-12之間');
-                    return;
-                }
-                
-                if (dayNum < 1 || dayNum > 31) {
-                    alert('日期必須在1-31之間');
-                    return;
-                }
-
-                // 發送到後端
-                await apiRequest('/bookings', {
+                const response = await apiRequest('/bookings', {
                     method: 'POST',
-                    body: JSON.stringify({
-                        name: name,
-                        month: monthNum,
-                        day: dayNum,
-                        time: time
-                    })
+                    body: JSON.stringify({ name: name })
                 });
 
-                // 清空表單
                 document.getElementById('playerName').value = '';
-                document.getElementById('month').value = '';
-                document.getElementById('day').value = '';
-                document.getElementById('time').value = '';
-
-                // 重新載入預約列表
                 await loadBookings();
-                alert('預約成功！所有球友都能看到了');
+                alert(response.message || '預約成功！');
 
             } catch (error) {
                 console.error('預約失敗:', error.message);
-                alert('預約失敗，請重試: ' + error.message);
+                
+                if (error.message.includes('400')) {
+                    // 可能是重複預約
+                    try {
+                        const errorResponse = await error.response?.json();
+                        alert(errorResponse?.message || '預約失敗：可能已經預約過了');
+                    } catch {
+                        alert('預約失敗：可能已經預約過了');
+                    }
+                } else {
+                    alert('預約失敗，請重試');
+                }
+                
                 updateConnectionStatus(false, '預約失敗');
             }
         }
 
-        // 取消預約
-        async function cancelBooking(id) {
-            console.log('❌ 取消預約:', id);
+        async function cancelBooking(id, name) {
+            console.log('❌ 取消預約:', id, name);
             
             if (!isOnline) {
                 alert('目前離線，無法取消預約');
@@ -438,7 +471,7 @@
             }
 
             try {
-                if (confirm('確定要取消這個預約嗎？所有球友都會看到此變更。')) {
+                if (confirm(`確定要取消 ${name} 的預約嗎？`)) {
                     await apiRequest(`/bookings/${id}`, {
                         method: 'DELETE'
                     });
@@ -448,21 +481,11 @@
                 }
             } catch (error) {
                 console.error('取消預約失敗:', error.message);
-                alert('取消預約失敗，請重試: ' + error.message);
+                alert('取消預約失敗，請重試');
                 updateConnectionStatus(false, '取消失敗');
             }
         }
 
-        // 排序函數
-        function sortBookings(bookings) {
-            return bookings.sort((a, b) => {
-                if (a.month !== b.month) return a.month - b.month;
-                if (a.day !== b.day) return a.day - b.day;
-                return a.time < b.time ? -1 : (a.time > b.time ? 1 : 0);
-            });
-        }
-
-        // 更新顯示
         function updateDisplay() {
             console.log('🔄 更新顯示:', bookings.length, '個預約');
             
@@ -482,17 +505,28 @@
             bookingTable.className = 'booking-table';
             emptyState.className = 'empty-state hidden';
 
-            const sortedBookings = sortBookings([...bookings]);
+            // 按創建時間排序
+            const sortedBookings = [...bookings].sort((a, b) => 
+                new Date(a.createdAt) - new Date(b.createdAt)
+            );
 
             let htmlContent = '';
             for (const booking of sortedBookings) {
+                const isToday = nextGameInfo && nextGameInfo.isToday && 
+                               booking.gameDate === nextGameInfo.fullDateString;
+                
+                const itemClass = isToday ? 'booking-item today' : 'booking-item';
+                
                 htmlContent += `
-                    <div class="booking-item">
+                    <div class="${itemClass}">
                         <div class="booking-info">
                             <div class="booking-name">${booking.name}</div>
-                            <div class="booking-detail">${booking.month}月${booking.day}日 ${booking.time}</div>
+                            <div class="booking-detail">
+                                ${booking.gameDayName} ${booking.gameDateString} ${booking.gameTime}
+                                ${isToday ? ' (今天)' : ''}
+                            </div>
                         </div>
-                        <button class="cancel-btn" onclick="cancelBooking('${booking.id}')">取消</button>
+                        <button class="cancel-btn" onclick="cancelBooking('${booking.id}', '${booking.name}')">取消</button>
                     </div>
                 `;
             }
@@ -501,37 +535,34 @@
             console.log('✅ 顯示更新完成');
         }
 
-        // 處理鍵盤事件
         function handleKeyDown(event) {
             if (event.key === 'Enter') {
                 const activeElement = document.activeElement;
-                if (activeElement && ['playerName', 'month', 'day', 'time'].includes(activeElement.id)) {
+                if (activeElement && activeElement.id === 'playerName') {
                     addBooking();
                 }
             }
         }
 
-        // 開始定期同步
         function startPeriodicSync() {
             console.log('⏰ 開始定期同步 (每15秒)');
             setInterval(async () => {
                 if (isOnline) {
                     try {
+                        await loadNextGame();
                         await loadBookings();
                     } catch (error) {
                         console.error('定期同步失敗:', error);
                         updateConnectionStatus(false, '同步中斷');
                     }
                 }
-            }, 15000); // 每15秒同步一次
+            }, 15000);
         }
 
-        // 初始化應用
         async function initializeApp() {
             console.log('🚀 初始化應用程式...');
             
             try {
-                // 綁定事件
                 const bookingBtn = document.getElementById('bookingBtn');
                 if (bookingBtn) {
                     bookingBtn.addEventListener('click', addBooking);
@@ -539,30 +570,26 @@
                 
                 document.addEventListener('keydown', handleKeyDown);
                 
-                // 載入初始數據
+                await loadNextGame();
                 await loadBookings();
-                
-                // 開始定期同步
                 startPeriodicSync();
                 
-                console.log('✅ 球友預約系統初始化完成');
+                console.log('✅ 智能羽球預約系統初始化完成');
             } catch (error) {
                 console.error('初始化失敗:', error);
                 updateConnectionStatus(false, '初始化失敗');
             }
         }
 
-        // 等待DOM加載完成
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', initializeApp);
         } else {
             initializeApp();
         }
 
-        // 使函數全域可用（用於 onclick 事件）
         window.cancelBooking = cancelBooking;
         
-        console.log('📜 腳本載入完成');
+        console.log('📜 智能羽球預約系統腳本載入完成');
     </script>
 </body>
 </html>
