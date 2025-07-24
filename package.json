@@ -1,0 +1,29 @@
+{
+  "name": "reservation-app",
+  "version": "1.0.0",
+  "description": "球友預約系統",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "heroku": "^8.7.1"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ethanyyii/reservation-app.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ethanyyii/reservation-app/issues"
+  },
+  "homepage": "https://github.com/ethanyyii/reservation-app#readme"
+}
