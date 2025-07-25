@@ -48,7 +48,7 @@ async function writeBookings(bookings) {
     }
 }
 
-// 獲取下一場羽球賽日期
+// 修復：獲取下一場羽球賽日期的邏輯
 function getNextGameDate() {
     const now = new Date();
     const today = now.getDay(); // 0=週日, 1=週一, 2=週二, 3=週三, 4=週四, 5=週五, 6=週六
@@ -57,39 +57,52 @@ function getNextGameDate() {
     // 打球日：週一(1)、週三(3)、週五(5)
     const gameDays = [1, 3, 5];
     
+    console.log(`🕐 現在時間：星期${['日','一','二','三','四','五','六'][today]} ${currentHour}點`);
+    
     let nextGameDay;
     let daysToAdd = 0;
     let nextDate = new Date(now);
+    let isToday = false;
     
-    // 規則 A：如果今天是打球日且還沒到9點，可以預約今天
+    // 🔧 修復邏輯：如果今天是打球日且還沒到9點，可以預約今天
     if (gameDays.includes(today) && currentHour < 9) {
+        console.log('✅ 今天是打球日且還沒到9點，可預約今天');
         nextDate = new Date(now);
         nextGameDay = today;
         daysToAdd = 0;
+        isToday = true;
     } else {
-        // 找到下一個打球日
-        const nextGameDays = gameDays.filter(day => day > today);
+        console.log('⏭️ 今天不是打球日或已過9點，尋找下一場');
         
-        if (nextGameDays.length > 0) {
+        // 找到今天之後的下一個打球日
+        const futureGameDays = gameDays.filter(day => day > today);
+        
+        if (futureGameDays.length > 0) {
             // 本週還有打球日
-            nextGameDay = nextGameDays[0];
+            nextGameDay = futureGameDays[0];
             daysToAdd = nextGameDay - today;
+            console.log(`📅 本週還有打球日：星期${['日','一','二','三','四','五','六'][nextGameDay]}`);
         } else {
             // 本週沒有了，找下週的第一個打球日（週一）
             nextGameDay = 1; // 週一
             daysToAdd = 7 - today + 1;
+            console.log('📅 本週沒有了，預約下週一');
         }
         
         nextDate.setDate(now.getDate() + daysToAdd);
+        isToday = false;
     }
     
-    return {
+    const result = {
         date: nextDate,
         dayName: ['週日', '週一', '週二', '週三', '週四', '週五', '週六'][nextGameDay],
         dateString: `${nextDate.getMonth() + 1}/${nextDate.getDate()}`,
         fullDateString: `${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, '0')}-${String(nextDate.getDate()).padStart(2, '0')}`,
-        isToday: daysToAdd === 0
+        isToday: isToday
     };
+    
+    console.log('🎯 下一場羽球:', result);
+    return result;
 }
 
 // 清理過期預約
