@@ -48,26 +48,34 @@ async function writeBookings(bookings) {
     }
 }
 
-// 修復：獲取下一場羽球賽日期的邏輯
-function getNextGameDate() {
+// 🔧 修復：獲取台灣時間
+function getTaiwanTime() {
     const now = new Date();
-    const today = now.getDay(); // 0=週日, 1=週一, 2=週二, 3=週三, 4=週四, 5=週五, 6=週六
-    const currentHour = now.getHours();
+    // 轉換為台灣時間 (UTC+8)
+    const taiwanTime = new Date(now.getTime() + (8 * 60 * 60 * 1000));
+    return taiwanTime;
+}
+
+// 🔧 修復：使用台灣時間判斷下一場羽球賽
+function getNextGameDate() {
+    const taiwanNow = getTaiwanTime();
+    const today = taiwanNow.getDay(); // 0=週日, 1=週一, 2=週二, 3=週三, 4=週四, 5=週五, 6=週六
+    const currentHour = taiwanNow.getHours();
     
     // 打球日：週一(1)、週三(3)、週五(5)
     const gameDays = [1, 3, 5];
     
-    console.log(`🕐 現在時間：星期${['日','一','二','三','四','五','六'][today]} ${currentHour}點`);
+    console.log(`🕐 台灣現在時間：${taiwanNow.toLocaleString('zh-TW')} (星期${['日','一','二','三','四','五','六'][today]} ${currentHour}點)`);
     
     let nextGameDay;
     let daysToAdd = 0;
-    let nextDate = new Date(now);
+    let nextDate = new Date(taiwanNow);
     let isToday = false;
     
     // 🔧 修復邏輯：如果今天是打球日且還沒到9點，可以預約今天
     if (gameDays.includes(today) && currentHour < 9) {
         console.log('✅ 今天是打球日且還沒到9點，可預約今天');
-        nextDate = new Date(now);
+        nextDate = new Date(taiwanNow);
         nextGameDay = today;
         daysToAdd = 0;
         isToday = true;
@@ -81,15 +89,15 @@ function getNextGameDate() {
             // 本週還有打球日
             nextGameDay = futureGameDays[0];
             daysToAdd = nextGameDay - today;
-            console.log(`📅 本週還有打球日：星期${['日','一','二','三','四','五','六'][nextGameDay]}`);
+            console.log(`📅 本週還有打球日：星期${['日','一','二','三','四','五','六'][nextGameDay]} (${daysToAdd}天後)`);
         } else {
             // 本週沒有了，找下週的第一個打球日（週一）
             nextGameDay = 1; // 週一
             daysToAdd = 7 - today + 1;
-            console.log('📅 本週沒有了，預約下週一');
+            console.log(`📅 本週沒有了，預約下週一 (${daysToAdd}天後)`);
         }
         
-        nextDate.setDate(now.getDate() + daysToAdd);
+        nextDate.setDate(taiwanNow.getDate() + daysToAdd);
         isToday = false;
     }
     
@@ -107,9 +115,9 @@ function getNextGameDate() {
 
 // 清理過期預約
 function cleanupExpiredBookings(bookings) {
-    const now = new Date();
-    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    const currentHour = now.getHours();
+    const taiwanNow = getTaiwanTime();
+    const today = `${taiwanNow.getFullYear()}-${String(taiwanNow.getMonth() + 1).padStart(2, '0')}-${String(taiwanNow.getDate()).padStart(2, '0')}`;
+    const currentHour = taiwanNow.getHours();
     
     return bookings.filter(booking => {
         if (booking.gameDate > today) return true;
@@ -127,10 +135,12 @@ function generateId() {
 
 // 健康檢查
 app.get('/api/health', (req, res) => {
+    const taiwanNow = getTaiwanTime();
     res.json({
         success: true,
         message: '智能羽球預約系統正常運行',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        taiwanTime: taiwanNow.toLocaleString('zh-TW')
     });
 });
 
@@ -146,6 +156,10 @@ app.get('/api/next-game', (req, res) => {
                 fullDateString: nextGame.fullDateString,
                 time: '上午9:00-12:00',
                 isToday: nextGame.isToday
+            },
+            debug: {
+                taiwanTime: getTaiwanTime().toLocaleString('zh-TW'),
+                serverTime: new Date().toISOString()
             }
         });
     } catch (error) {
@@ -260,6 +274,7 @@ async function startServer() {
     await ensureDataFile();
     app.listen(PORT, () => {
         console.log(`🏸 智能羽球預約系統已啟動在 port ${PORT}`);
+        console.log(`🕐 台灣時間：${getTaiwanTime().toLocaleString('zh-TW')}`);
     });
 }
 
