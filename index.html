@@ -2,505 +2,653 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, maximum-scale=5.0">
-    <title>球友預約系統</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏸 羅羽翔鷹隊</title>
     <style>
-        /* 基礎重置和手機優化 */
         * {
+            margin: 0;
+            padding: 0;
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
         }
         
         body {
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #dbeafe 0%, #dcfce7 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            background: #f2f2f7;
+            color: #1c1c1e;
+            line-height: 1.6;
             min-height: 100vh;
-            font-size: 16px;
-            line-height: 1.5;
         }
         
         .container {
-            max-width: 400px;
+            max-width: 414px;
             margin: 0 auto;
-            padding: 20px;
+            min-height: 100vh;
+            background: #f2f2f7;
         }
-        
-        .card {
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            padding: 24px;
-            margin-bottom: 20px;
-        }
-        
-        .title {
-            font-size: 24px;
-            font-weight: bold;
+
+        /* 頂部標題欄 */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 0.5px solid rgba(60, 60, 67, 0.36);
+            padding: 44px 20px 16px;
             text-align: center;
-            color: #1f2937;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .title {
+            font-size: 34px;
+            font-weight: 700;
+            color: #1c1c1e;
+            margin-bottom: 4px;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: #8e8e93;
+            font-weight: 400;
+        }
+
+        /* 卡片樣式 */
+        .card {
+            background: #ffffff;
+            border-radius: 16px;
+            margin: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+            border: 0.5px solid rgba(60, 60, 67, 0.18);
+            overflow: hidden;
+        }
+
+        .card-content {
+            padding: 24px;
+        }
+
+        /* 下一場羽球卡片 */
+        .next-game-card {
+            background: linear-gradient(135deg, #007aff 0%, #0051d5 100%);
+            color: white;
+            text-align: center;
+        }
+
+        .next-game-title {
+            font-size: 17px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            opacity: 0.9;
+        }
+
+        .next-game-info {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .next-game-time {
+            font-size: 16px;
+            opacity: 0.8;
+        }
+
+        /* 連接狀態 */
+        .connection-status {
+            margin: 16px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            text-align: center;
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        .status-online {
+            background: rgba(52, 199, 89, 0.15);
+            color: #30b46c;
+            border: 1px solid rgba(52, 199, 89, 0.3);
+        }
+
+        .status-offline {
+            background: rgba(255, 59, 48, 0.15);
+            color: #d70015;
+            border: 1px solid rgba(255, 59, 48, 0.3);
+        }
+
+        /* 快速預約區域 */
+        .quick-booking-section {
+            background: #ffffff;
+        }
+
+        .quick-booking-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: #1c1c1e;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .name-buttons-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+
+        .name-btn {
+            background: #f2f2f7;
+            border: 1.5px solid #d1d1d6;
+            border-radius: 12px;
+            padding: 12px 8px;
+            font-size: 15px;
+            font-weight: 600;
+            color: #1c1c1e;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .name-btn:hover {
+            background: #e5e5ea;
+            border-color: #007aff;
+            transform: translateY(-1px);
+        }
+
+        .name-btn:active {
+            transform: translateY(0);
+            background: #d1d1d6;
+        }
+
+        .name-btn:disabled {
+            background: #d1d1d6;
+            color: #8e8e93;
+            cursor: not-allowed;
+            transform: none;
+            opacity: 0.5;
+        }
+
+        /* 表單區域 */
+        .form-section {
+            background: #ffffff;
+        }
+
+        .section-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: #1c1c1e;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .input-group {
             margin-bottom: 24px;
+        }
+
+        input {
+            width: 100%;
+            padding: 16px;
+            border: 1.5px solid #d1d1d6;
+            border-radius: 12px;
+            font-size: 17px;
+            background: #ffffff;
+            color: #1c1c1e;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #007aff;
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        }
+
+        input::placeholder {
+            color: #8e8e93;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            background: #007aff;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
+            min-height: 56px;
         }
-        
-        .connection-status {
-            text-align: center;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 16px;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-        
-        .status-online {
-            background: #dcfce7;
-            color: #166534;
-            border: 1px solid #bbf7d0;
-        }
-        
-        .status-offline {
-            background: #fee2e2;
-            color: #991b1b;
-            border: 1px solid #fecaca;
-        }
-        
-        .status-connecting {
-            background: #fef3c7;
-            color: #92400e;
-            border: 1px solid #fde68a;
-        }
-        
-        .form-section {
-            background: linear-gradient(90deg, #dbeafe 0%, #dcfce7 100%);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 24px;
-        }
-        
-        .section-title {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 16px;
-            color: #374151;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .input-group {
-            margin-bottom: 16px;
-        }
-        
-        .input-row {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-        
-        .input-row input {
-            flex: 1;
-        }
-        
-        input {
-            width: 100%;
-            padding: 16px;
-            border: 2px solid #d1d5db;
-            border-radius: 8px;
-            font-size: 16px;
-            background: white;
-            transition: border-color 0.2s;
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
-        }
-        
-        input:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-        
-        input[type="time"] {
-            font-family: inherit;
-        }
-        
-        .btn {
-            width: 100%;
-            padding: 16px;
-            background: linear-gradient(90deg, #2563eb 0%, #1d4ed8 100%);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
-            touch-action: manipulation;
-            min-height: 48px;
-        }
-        
-        .btn:hover, .btn:active {
-            background: linear-gradient(90deg, #1d4ed8 0%, #1e40af 100%);
+
+        .btn:hover {
+            background: #0051d5;
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
         }
-        
+
+        .btn:active {
+            transform: translateY(0);
+            background: #004bb8;
+        }
+
         .btn:disabled {
-            background: #9ca3af;
+            background: #d1d1d6;
+            color: #8e8e93;
             cursor: not-allowed;
             transform: none;
-            box-shadow: none;
         }
-        
+
+        /* 統計區域 */
         .stats-section {
-            background: linear-gradient(90deg, #dcfce7 0%, #dbeafe 100%);
+            background: rgba(52, 199, 89, 0.1);
+            border: 1px solid rgba(52, 199, 89, 0.3);
             border-radius: 12px;
             padding: 20px;
-            margin-bottom: 24px;
+            text-align: center;
+            margin: 16px;
         }
-        
+
         .stats-content {
-            display: flex;
-            align-items: center;
-            gap: 12px;
             font-size: 20px;
-            font-weight: bold;
-            color: #1f2937;
+            font-weight: 600;
+            color: #30b46c;
         }
-        
-        .sync-info {
-            font-size: 12px;
-            color: #6b7280;
-            margin-top: 8px;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-        
+
+        /* 預約列表 */
         .booking-table {
-            background: white;
-            border-radius: 12px;
-            border: 1px solid #e5e7eb;
+            background: #ffffff;
+            border-radius: 16px;
             overflow: hidden;
-            margin-bottom: 20px;
+            margin: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+            border: 0.5px solid rgba(60, 60, 67, 0.18);
         }
-        
+
         .table-header {
-            background: linear-gradient(90deg, #f9fafb 0%, #f3f4f6 100%);
-            padding: 16px;
-            border-bottom: 1px solid #e5e7eb;
+            background: #f2f2f7;
+            padding: 16px 20px;
+            border-bottom: 0.5px solid rgba(60, 60, 67, 0.18);
+            font-weight: 600;
+            text-align: center;
+            color: #1c1c1e;
+            font-size: 17px;
         }
-        
+
         .booking-item {
-            padding: 20px;
-            border-bottom: 1px solid #f3f4f6;
-            background: white;
-            transition: background-color 0.2s;
+            padding: 16px 20px;
+            border-bottom: 0.5px solid rgba(60, 60, 67, 0.18);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.2s ease;
         }
-        
+
         .booking-item:last-child {
             border-bottom: none;
         }
-        
-        .booking-item.expiring {
-            background-color: #fefce8;
-            border-left: 4px solid #f59e0b;
+
+        .booking-item:active {
+            background: #f2f2f7;
         }
-        
-        .booking-item.new {
-            background-color: #f0fdf4;
-            border-left: 4px solid #22c55e;
+
+        .booking-item.today {
+            background: rgba(255, 149, 0, 0.1);
+            border-left: 4px solid #ff9500;
         }
-        
-        .booking-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 12px;
-        }
-        
+
         .booking-info {
             flex: 1;
         }
-        
+
         .booking-name {
-            font-size: 18px;
+            font-size: 17px;
             font-weight: 600;
-            color: #111827;
-            margin-bottom: 8px;
+            color: #1c1c1e;
+            margin-bottom: 2px;
         }
-        
+
         .booking-detail {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: #6b7280;
-            margin-bottom: 4px;
-            font-size: 14px;
+            font-size: 15px;
+            color: #8e8e93;
         }
-        
+
         .cancel-btn {
-            background: #ef4444;
+            background: #ff3b30;
             color: white;
             border: none;
-            border-radius: 6px;
-            padding: 12px 16px;
+            border-radius: 8px;
+            padding: 8px 12px;
             font-size: 14px;
+            font-weight: 600;
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            transition: background 0.2s;
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
-            touch-action: manipulation;
-            min-height: 40px;
+            transition: all 0.2s ease;
             margin-left: 12px;
         }
-        
-        .cancel-btn:hover, .cancel-btn:active {
-            background: #dc2626;
+
+        .cancel-btn:hover {
+            background: #d70015;
+            transform: translateY(-1px);
         }
-        
+
+        .cancel-btn:active {
+            transform: translateY(0);
+            background: #bf0013;
+        }
+
+        /* 空狀態 */
         .empty-state {
             text-align: center;
             padding: 40px 20px;
-            color: #6b7280;
+            color: #8e8e93;
+            margin: 16px;
         }
-        
-        .empty-icon {
-            width: 48px;
-            height: 48px;
-            margin: 0 auto 16px;
-            color: #d1d5db;
+
+        .empty-state p {
+            margin-bottom: 8px;
+            font-size: 17px;
         }
-        
+
+        /* 隱藏類 */
         .hidden {
             display: none;
         }
-        
-        .loading {
-            opacity: 0.6;
-            pointer-events: none;
-        }
-        
-        .pulse {
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-        
-        /* SVG 圖標 */
-        .icon {
-            width: 20px;
-            height: 20px;
-            flex-shrink: 0;
-        }
-        
-        .icon-sm {
-            width: 16px;
-            height: 16px;
-        }
-        
-        .icon-lg {
-            width: 24px;
-            height: 24px;
-        }
-        
-        /* 手機優化 */
-        @media (max-width: 480px) {
+
+        /* 響應式設計 */
+        @media (min-width: 768px) {
             .container {
-                padding: 16px;
+                max-width: 600px;
+                margin: 20px auto;
+                border-radius: 24px;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+                overflow: hidden;
             }
-            
+
+            .header {
+                padding: 24px 20px 20px;
+                position: static;
+            }
+
+            .name-buttons-grid {
+                grid-template-columns: repeat(6, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
             .card {
+                margin: 12px;
+            }
+
+            .card-content {
                 padding: 20px;
             }
-            
-            .title {
-                font-size: 22px;
+
+            .name-buttons-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 8px;
             }
-            
-            .booking-header {
+
+            .name-btn {
+                font-size: 14px;
+                padding: 10px 6px;
+                min-height: 44px;
+            }
+
+            .booking-item {
                 flex-direction: column;
                 gap: 12px;
+                align-items: flex-start;
             }
-            
+
             .cancel-btn {
-                align-self: flex-start;
                 margin-left: 0;
+                align-self: flex-end;
             }
         }
-        
-        /* 觸控改善 */
-        button, input, [onclick] {
-            touch-action: manipulation;
-        }
-        
-        /* 防止雙擊縮放 */
-        button {
-            user-select: none;
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
+
+        /* 深色模式支援 */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background: #000000;
+                color: #ffffff;
+            }
+
+            .container {
+                background: #000000;
+            }
+
+            .header {
+                background: rgba(28, 28, 30, 0.95);
+                border-bottom-color: rgba(84, 84, 88, 0.65);
+            }
+
+            .title {
+                color: #ffffff;
+            }
+
+            .card {
+                background: #1c1c1e;
+                border-color: rgba(84, 84, 88, 0.65);
+            }
+
+            .section-title {
+                color: #ffffff;
+            }
+
+            .booking-name {
+                color: #ffffff;
+            }
+
+            .table-header {
+                background: #2c2c2e;
+                color: #ffffff;
+            }
+
+            input {
+                background: #2c2c2e;
+                border-color: #48484a;
+                color: #ffffff;
+            }
+
+            .name-btn {
+                background: #2c2c2e;
+                border-color: #48484a;
+                color: #ffffff;
+            }
+
+            .name-btn:hover {
+                background: #3a3a3c;
+            }
+
+            .booking-item:active {
+                background: #2c2c2e;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="card">
-            <!-- 標題 -->
-            <h1 class="title">
-                <svg class="icon-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #3b82f6;">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                    <line x1="16" y1="2" x2="16" y2="6"></line>
-                    <line x1="8" y1="2" x2="8" y2="6"></line>
-                    <line x1="3" y1="10" x2="21" y2="10"></line>
-                </svg>
-                球友預約系統
-            </h1>
+        <div class="header">
+            <h1 class="title">🏸 羅羽翔鷹隊</h1>
+            <div class="subtitle">智能預約系統</div>
+        </div>
 
-            <!-- 連線狀態 -->
-            <div id="connectionStatus" class="connection-status status-connecting">
-                🟡 正在連接伺服器...
+        <div class="card next-game-card">
+            <div class="card-content">
+                <div class="next-game-title">可預約場次</div>
+                <div id="nextGameInfo" class="next-game-info">載入中...</div>
+                <div id="nextGameTime" class="next-game-time">上午9:00-12:00</div>
             </div>
+        </div>
 
-            <!-- 預約表單 -->
-            <div class="form-section">
-                <h2 class="section-title">
-                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <line x1="12" y1="5" x2="12" y2="19"></line>
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                    </svg>
-                    新增預約
-                </h2>
+        <div id="connectionStatus" class="connection-status status-offline">
+            🟡 正在連接...
+        </div>
+
+        <div class="card quick-booking-section">
+            <div class="card-content">
+                <div class="quick-booking-title">👥 會員快速預約</div>
+                <div class="name-buttons-grid" id="nameButtonsGrid">
+                    <button class="name-btn" onclick="quickBooking('黃老師')">黃老師</button>
+                    <button class="name-btn" onclick="quickBooking('阿平')">阿平</button>
+                    <button class="name-btn" onclick="quickBooking('我')">我</button>
+                    <button class="name-btn" onclick="quickBooking('皮')">皮</button>
+                    <button class="name-btn" onclick="quickBooking('張清文')">張清文</button>
+                    <button class="name-btn" onclick="quickBooking('文姿')">文姿</button>
+                    <button class="name-btn" onclick="quickBooking('智宇')">智宇</button>
+                    <button class="name-btn" onclick="quickBooking('克拉克')">克拉克</button>
+                    <button class="name-btn" onclick="quickBooking('Ben')">Ben</button>
+                    <button class="name-btn" onclick="quickBooking('雄')">雄</button>
+                    <button class="name-btn" onclick="quickBooking('明正')">明正</button>
+                    <button class="name-btn" onclick="quickBooking('曜竹')">曜竹</button>
+                    <button class="name-btn" onclick="quickBooking('阿生')">阿生</button>
+                    <button class="name-btn" onclick="quickBooking('哲維')">哲維</button>
+                    <button class="name-btn" onclick="quickBooking('查理王')">查理王</button>
+                    <button class="name-btn" onclick="quickBooking('🦅')">🦅</button>
+                    <button class="name-btn" onclick="quickBooking('皮')">皮</button>
+                    <button class="name-btn" onclick="quickBooking('曜竹')">曜竹</button>
+                    <button class="name-btn" onclick="quickBooking('怡姍')">怡姍</button>
+                    <button class="name-btn" onclick="quickBooking('控')">控</button>
+                    <button class="name-btn" onclick="quickBooking('彥皓')">彥皓</button>
+                    <button class="name-btn" onclick="quickBooking('海哥')">海哥</button>
+                    <button class="name-btn" onclick="quickBooking('阿嘉')">阿嘉</button>
+                    <button class="name-btn" onclick="quickBooking('許')">許</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card form-section">
+            <div class="card-content">
+                <h2 class="section-title">臨打報名</h2>
+                <p style="text-align: center; color: #8e8e93; font-size: 15px; margin-bottom: 20px;">
+                    晚上8點後未滿17人才開放
+                </p>
                 
                 <div class="input-group">
-                    <input
-                        type="text"
-                        id="playerName"
-                        placeholder="球友姓名"
-                        autocomplete="name"
-                    />
-                </div>
-                
-                <div class="input-row">
-                    <input
-                        type="number"
-                        id="month"
-                        placeholder="月份 (1-12)"
-                        min="1"
-                        max="12"
-                        inputmode="numeric"
-                    />
-                    <input
-                        type="number"
-                        id="day"
-                        placeholder="日期 (1-31)"
-                        min="1"
-                        max="31"
-                        inputmode="numeric"
-                    />
-                </div>
-                
-                <div class="input-group">
-                    <input
-                        type="time"
-                        id="time"
-                    />
+                    <input type="text" id="playerName" placeholder="請輸入你的姓名" maxlength="20" />
                 </div>
                 
                 <button type="button" class="btn" id="bookingBtn" disabled>
-                    預約
+                    立即預約
                 </button>
             </div>
+        </div>
 
-            <!-- 預約統計 -->
-            <div class="stats-section">
-                <div class="stats-content">
-                    <svg class="icon-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #16a34a;">
-                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="9" cy="7" r="4"></circle>
-                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                    </svg>
-                    線上預約人數：<span id="totalCount">0</span> 人
-                </div>
-                <div class="sync-info" id="syncInfo">
-                    <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                    </svg>
-                    <span id="lastSync">等待同步中...</span>
-                </div>
+        <div class="stats-section">
+            <div class="stats-content">
+                已預約人數：<span id="totalCount">0</span> 人
             </div>
+        </div>
 
-            <!-- 預約列表 -->
-            <div id="bookingTable" class="booking-table hidden">
-                <div class="table-header">
-                    <h2 class="section-title" style="margin-bottom: 0;">
-                        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                            <line x1="16" y1="2" x2="16" y2="6"></line>
-                            <line x1="8" y1="2" x2="8" y2="6"></line>
-                            <line x1="3" y1="10" x2="21" y2="10"></line>
-                        </svg>
-                        即時預約清單
-                    </h2>
-                </div>
-                <div id="bookingList">
-                </div>
-            </div>
+        <div id="bookingTable" class="booking-table hidden">
+            <div class="table-header">📋 出席名單</div>
+            <div id="bookingList"></div>
+        </div>
 
-            <!-- 空狀態 -->
-            <div id="emptyState" class="empty-state">
-                <svg class="empty-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                    <line x1="16" y1="2" x2="16" y2="6"></line>
-                    <line x1="8" y1="2" x2="8" y2="6"></line>
-                    <line x1="3" y1="10" x2="21" y2="10"></line>
-                </svg>
-                <p style="font-size: 16px; margin-bottom: 8px;">目前沒有預約記錄</p>
-                <p style="font-size: 14px;">成為第一個預約的球友吧！</p>
-            </div>
+        <div id="emptyState" class="empty-state">
+            <p>目前沒有人預約</p>
+            <p>成為第一個預約的球友吧！</p>
         </div>
     </div>
 
     <script>
-        // 配置 - 請修改為你的後端服務網址
-        const API_BASE_URL = window.location.hostname === 'localhost' 
-            ? 'http://localhost:3000/api' 
-            : 'https://your-app-name.herokuapp.com/api';
+        console.log('🏸 羅羽翔鷹隊預約系統正在啟動...');
         
-        // 全域變數
+        const API_BASE_URL = window.location.origin + '/api';
+        console.log('API Base URL:', API_BASE_URL);
+        
         let bookings = [];
         let isOnline = false;
-        let lastKnownBookings = [];
-        let syncInterval;
+        let nextGameInfo = null;
 
-        // 格式化數字為兩位數
-        function padStart(str, targetLength, padString = '0') {
-            str = String(str);
-            if (str.length >= targetLength) return str;
-            const pad = padString.repeat(targetLength - str.length);
-            return pad + str;
+        // 新增：快速預約功能
+        async function quickBooking(name) {
+            console.log('⚡ 快速預約:', name);
+            
+            if (!isOnline) {
+                alert('目前離線，無法預約');
+                return;
+            }
+
+            // 找到對應的按鈕並暫時禁用
+            const buttons = document.querySelectorAll('.name-btn');
+            const targetButton = Array.from(buttons).find(btn => btn.textContent === name);
+            if (targetButton) {
+                targetButton.disabled = true;
+                targetButton.style.opacity = '0.6';
+            }
+
+            try {
+                const response = await apiRequest('/bookings', {
+                    method: 'POST',
+                    body: JSON.stringify({ name: name })
+                });
+
+                await loadBookings();
+                alert(`${name} 預約成功！`);
+
+            } catch (error) {
+                console.error('快速預約失敗:', error.message);
+                
+                if (error.message.includes('400')) {
+                    alert(`${name} 已經預約過了！`);
+                } else {
+                    alert(`${name} 預約失敗，請重試`);
+                }
+                
+                updateConnectionStatus(false, '預約失敗');
+            } finally {
+                // 重新啟用按鈕
+                if (targetButton) {
+                    targetButton.disabled = false;
+                    targetButton.style.opacity = '1';
+                }
+            }
         }
 
-        // API 請求函數
+        function updateConnectionStatus(online, message = '') {
+            isOnline = online;
+            const statusElement = document.getElementById('connectionStatus');
+            const bookingBtn = document.getElementById('bookingBtn');
+            const nameButtons = document.querySelectorAll('.name-btn');
+            
+            if (online) {
+                statusElement.className = 'connection-status status-online';
+                statusElement.textContent = '🟢 系統已連線';
+                bookingBtn.disabled = false;
+                
+                // 啟用快速預約按鈕
+                nameButtons.forEach(btn => {
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                });
+                
+                console.log('✅ 連線成功');
+            } else {
+                statusElement.className = 'connection-status status-offline';
+                statusElement.textContent = '🔴 連線中斷' + (message ? ' - ' + message : '');
+                bookingBtn.disabled = true;
+                
+                // 禁用快速預約按鈕
+                nameButtons.forEach(btn => {
+                    btn.disabled = true;
+                    btn.style.opacity = '0.5';
+                });
+                
+                console.log('❌ 連線失敗:', message);
+            }
+        }
+
         async function apiRequest(endpoint, options = {}) {
+            const url = `${API_BASE_URL}${endpoint}`;
+            console.log('🌐 API 請求:', url);
+            
             try {
-                const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+                const response = await fetch(url, {
                     headers: {
                         'Content-Type': 'application/json',
                         ...options.headers
@@ -509,315 +657,191 @@
                     ...options
                 });
                 
+                console.log('📡 API 回應狀態:', response.status);
+                
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 
-                return await response.json();
+                const data = await response.json();
+                return data;
             } catch (error) {
-                console.error('API request failed:', error);
+                console.error('💥 API 請求失敗:', error);
                 throw error;
             }
         }
 
-        // 更新連線狀態
-        function updateConnectionStatus(online, message = '') {
-            isOnline = online;
-            const statusElement = document.getElementById('connectionStatus');
-            const bookingBtn = document.getElementById('bookingBtn');
-            
-            if (online) {
-                statusElement.className = 'connection-status status-online';
-                statusElement.innerHTML = '🟢 已連線 - 即時同步中';
-                bookingBtn.disabled = false;
-            } else {
-                statusElement.className = 'connection-status status-offline';
-                statusElement.innerHTML = `🔴 連線中斷 ${message ? '- ' + message : ''}`;
-                bookingBtn.disabled = true;
+        async function loadNextGame() {
+            try {
+                const data = await apiRequest('/next-game');
+                nextGameInfo = data.nextGame;
+                
+                const nextGameInfoElement = document.getElementById('nextGameInfo');
+                const displayText = nextGameInfo.isToday ? 
+                    `今天 ${nextGameInfo.dateString} (${nextGameInfo.dayName})` :
+                    `${nextGameInfo.dayName} ${nextGameInfo.dateString}`;
+                
+                nextGameInfoElement.textContent = displayText;
+                
+                const bookingBtn = document.getElementById('bookingBtn');
+                bookingBtn.innerHTML = '立即預約';
+                
+                console.log('📅 下一場羽球:', nextGameInfo);
+            } catch (error) {
+                console.error('載入下一場羽球失敗:', error);
             }
         }
 
-        // 更新同步信息
-        function updateSyncInfo(message) {
-            const syncInfo = document.getElementById('lastSync');
-            const now = new Date();
-            const timeStr = `${padStart(now.getHours(), 2)}:${padStart(now.getMinutes(), 2)}`;
-            syncInfo.textContent = `${message} (${timeStr})`;
-        }
-
-        // 載入所有預約
         async function loadBookings() {
+            console.log('📥 正在載入預約...');
             try {
                 const data = await apiRequest('/bookings');
-                const newBookings = data.bookings || [];
-                
-                // 檢測新增的預約
-                const newBookingIds = newBookings.map(b => b.id);
-                const oldBookingIds = lastKnownBookings.map(b => b.id);
-                const addedBookings = newBookings.filter(b => !oldBookingIds.includes(b.id));
-                
-                bookings = newBookings;
-                lastKnownBookings = [...newBookings];
-                
-                updateDisplay(addedBookings);
+                bookings = data.bookings || [];
+                console.log('📋 載入的預約:', bookings);
+                updateDisplay();
                 updateConnectionStatus(true);
-                updateSyncInfo('已同步');
-                
-                if (addedBookings.length > 0 && oldBookingIds.length > 0) {
-                    showMessage(`新增了 ${addedBookings.length} 個預約！`);
-                }
-                
             } catch (error) {
-                console.error('載入預約失敗:', error);
+                console.error('載入預約失敗:', error.message);
                 updateConnectionStatus(false, '無法載入資料');
-                updateSyncInfo('同步失敗');
             }
         }
 
-        // 新增預約
         async function addBooking() {
+            console.log('➕ 開始新增預約...');
+            
             if (!isOnline) {
-                showMessage('目前離線，無法新增預約');
+                alert('目前離線，無法預約');
+                return;
+            }
+
+            const name = document.getElementById('playerName').value?.trim();
+            
+            if (!name) {
+                alert('請輸入你的姓名');
+                document.getElementById('playerName').focus();
+                return;
+            }
+
+            if (name.length > 20) {
+                alert('姓名不能超過20個字');
                 return;
             }
 
             try {
-                const name = document.getElementById('playerName').value?.trim();
-                const month = document.getElementById('month').value;
-                const day = document.getElementById('day').value;
-                const time = document.getElementById('time').value;
-
-                // 驗證輸入
-                if (!name || !month || !day || !time) {
-                    showMessage('請填寫所有欄位');
-                    return;
-                }
-
-                // 檢查月份和日期範圍
-                const monthNum = parseInt(month, 10);
-                const dayNum = parseInt(day, 10);
-                if (isNaN(monthNum) || monthNum < 1 || monthNum > 12) {
-                    showMessage('月份必須在1-12之間');
-                    return;
-                }
-                if (isNaN(dayNum) || dayNum < 1 || dayNum > 31) {
-                    showMessage('日期必須在1-31之間');
-                    return;
-                }
-
-                // 檢查預約時間是否已過
-                const now = new Date();
-                const currentMonth = now.getMonth() + 1;
-                const currentDay = now.getDate();
-                const currentTime = padStart(now.getHours(), 2) + ':' + padStart(now.getMinutes(), 2);
-
-                let isPastTime = false;
-                if (monthNum < currentMonth) {
-                    isPastTime = true;
-                } else if (monthNum === currentMonth && dayNum < currentDay) {
-                    isPastTime = true;
-                } else if (monthNum === currentMonth && dayNum === currentDay && time < currentTime) {
-                    isPastTime = true;
-                }
-
-                if (isPastTime) {
-                    showMessage('無法預約過去的時間');
-                    return;
-                }
-
-                // 設定載入狀態
-                document.body.classList.add('loading');
-                updateSyncInfo('正在新增預約...');
-
-                // 發送到後端
-                await apiRequest('/bookings', {
+                const response = await apiRequest('/bookings', {
                     method: 'POST',
-                    body: JSON.stringify({
-                        name: name,
-                        month: monthNum,
-                        day: dayNum,
-                        time: time
-                    })
+                    body: JSON.stringify({ name: name })
                 });
 
-                // 清空表單
                 document.getElementById('playerName').value = '';
-                document.getElementById('month').value = '';
-                document.getElementById('day').value = '';
-                document.getElementById('time').value = '';
-
-                // 立即重新載入預約列表
                 await loadBookings();
-                showMessage('預約成功！所有球友都能看到了');
+                alert(response.message || '預約成功！');
 
             } catch (error) {
-                console.error('預約失敗:', error);
-                showMessage('預約失敗，請重試');
+                console.error('預約失敗:', error.message);
+                
+                if (error.message.includes('400')) {
+                    try {
+                        const errorResponse = await error.response?.json();
+                        alert(errorResponse?.message || '預約失敗：可能已經預約過了');
+                    } catch {
+                        alert('預約失敗：可能已經預約過了');
+                    }
+                } else {
+                    alert('預約失敗，請重試');
+                }
+                
                 updateConnectionStatus(false, '預約失敗');
-                updateSyncInfo('預約失敗');
-            } finally {
-                document.body.classList.remove('loading');
             }
         }
 
-        // 取消預約
-        async function cancelBooking(id) {
+        async function cancelBooking(id, name) {
+            console.log('❌ 取消預約:', id, name);
+            
             if (!isOnline) {
-                showMessage('目前離線，無法取消預約');
+                alert('目前離線，無法取消預約');
                 return;
             }
 
             try {
-                if (confirm('確定要取消這個預約嗎？所有球友都會看到此變更。')) {
-                    document.body.classList.add('loading');
-                    updateSyncInfo('正在取消預約...');
-                    
+                if (confirm(`確定要取消 ${name} 的預約嗎？`)) {
                     await apiRequest(`/bookings/${id}`, {
                         method: 'DELETE'
                     });
 
                     await loadBookings();
-                    showMessage('預約已取消');
+                    alert('預約已取消');
                 }
             } catch (error) {
-                console.error('取消預約失敗:', error);
-                showMessage('取消預約失敗，請重試');
+                console.error('取消預約失敗:', error.message);
+                alert('取消預約失敗，請重試');
                 updateConnectionStatus(false, '取消失敗');
-                updateSyncInfo('取消失敗');
-            } finally {
-                document.body.classList.remove('loading');
             }
         }
 
-        // 顯示訊息
-        function showMessage(message) {
-            alert(message);
-        }
+        function updateDisplay() {
+            console.log('🔄 更新顯示:', bookings.length, '個預約');
+            
+            const totalCount = document.getElementById('totalCount');
+            const bookingTable = document.getElementById('bookingTable');
+            const emptyState = document.getElementById('emptyState');
+            const bookingList = document.getElementById('bookingList');
 
-        // 排序函數
-        function sortBookings(bookings) {
-            return bookings.sort((a, b) => {
-                if (a.month !== b.month) return a.month - b.month;
-                if (a.day !== b.day) return a.day - b.day;
-                return a.time < b.time ? -1 : (a.time > b.time ? 1 : 0);
-            });
-        }
+            totalCount.textContent = bookings.length;
 
-        // 更新顯示
-        function updateDisplay(newBookings = []) {
-            try {
-                const totalCount = document.getElementById('totalCount');
-                const bookingTable = document.getElementById('bookingTable');
-                const emptyState = document.getElementById('emptyState');
-                const bookingList = document.getElementById('bookingList');
+            if (bookings.length === 0) {
+                bookingTable.className = 'booking-table hidden';
+                emptyState.className = 'empty-state';
+                return;
+            }
 
-                totalCount.textContent = bookings.length;
+            bookingTable.className = 'booking-table';
+            emptyState.className = 'empty-state hidden';
 
-                if (bookings.length === 0) {
-                    bookingTable.className = 'booking-table hidden';
-                    emptyState.className = 'empty-state';
-                    return;
-                }
+            const sortedBookings = [...bookings].sort((a, b) => 
+                new Date(a.createdAt) - new Date(b.createdAt)
+            );
 
-                bookingTable.className = 'booking-table';
-                emptyState.className = 'empty-state hidden';
-
-                const sortedBookings = sortBookings([...bookings]);
-                const newBookingIds = newBookings.map(b => b.id);
-
-                const now = new Date();
-                const currentMonth = now.getMonth() + 1;
-                const currentDay = now.getDate();
-                const currentTime = padStart(now.getHours(), 2) + ':' + padStart(now.getMinutes(), 2);
-
-                let htmlContent = '';
-                for (const booking of sortedBookings) {
-                    const isExpiringSoon = booking.month === currentMonth && 
-                                         booking.day === currentDay && 
-                                         booking.time <= currentTime;
-                    
-                    const isNew = newBookingIds.includes(booking.id);
-                    
-                    let itemClass = 'booking-item';
-                    if (isExpiringSoon) itemClass += ' expiring';
-                    if (isNew) itemClass += ' new';
-
-                    const timeIconColor = isExpiringSoon ? '#f59e0b' : '#16a34a';
-                    const expiringText = isExpiringSoon ? '<span style="font-size: 12px; color: #d97706; margin-left: 4px;">(即將過期)</span>' : '';
-                    const newText = isNew ? '<span style="font-size: 12px; color: #16a34a; margin-left: 4px;">🆕</span>' : '';
-
-                    htmlContent += 
-                        `<div class="${itemClass}">
-                            <div class="booking-header">
-                                <div class="booking-info">
-                                    <div class="booking-name">${booking.name}${newText}</div>
-                                    <div class="booking-detail">
-                                        <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #3b82f6;">
-                                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                                            <line x1="16" y1="2" x2="16" y2="6"></line>
-                                            <line x1="8" y1="2" x2="8" y2="6"></line>
-                                            <line x1="3" y1="10" x2="21" y2="10"></line>
-                                        </svg>
-                                        <span>${booking.month}月${booking.day}日</span>
-                                    </div>
-                                    <div class="booking-detail">
-                                        <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: ${timeIconColor};">
-                                            <circle cx="12" cy="12" r="10"></circle>
-                                            <polyline points="12,6 12,12 16,14"></polyline>
-                                        </svg>
-                                        <span>${booking.time}</span>
-                                        ${expiringText}
-                                    </div>
-                                </div>
-                                <button class="cancel-btn" onclick="cancelBooking('${booking.id}')">
-                                    <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <polyline points="3,6 5,6 21,6"></polyline>
-                                        <path d="M19,6V20a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6M8,6V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2V6"></path>
-                                        <line x1="10" y1="11" x2="10" y2="17"></line>
-                                        <line x1="14" y1="11" x2="14" y2="17"></line>
-                                    </svg>
-                                    取消
-                                </button>
+            let htmlContent = '';
+            for (const booking of sortedBookings) {
+                const isToday = nextGameInfo && nextGameInfo.isToday && 
+                               booking.gameDate === nextGameInfo.fullDateString;
+                
+                const itemClass = isToday ? 'booking-item today' : 'booking-item';
+                
+                htmlContent += `
+                    <div class="${itemClass}">
+                        <div class="booking-info">
+                            <div class="booking-name">${booking.name}</div>
+                            <div class="booking-detail">
+                                ${booking.gameDayName} ${booking.gameDateString} ${booking.gameTime}
+                                ${isToday ? ' (今天)' : ''}
                             </div>
-                        </div>`;
-                }
-                
-                bookingList.innerHTML = htmlContent;
-                
-                // 移除新預約的高亮效果
-                if (newBookings.length > 0) {
-                    setTimeout(() => {
-                        const newItems = document.querySelectorAll('.booking-item.new');
-                        newItems.forEach(item => item.classList.remove('new'));
-                    }, 3000);
-                }
-                
-            } catch (error) {
-                console.error('更新顯示時發生錯誤:', error);
+                        </div>
+                        <button class="cancel-btn" onclick="cancelBooking('${booking.id}', '${booking.name}')">取消</button>
+                    </div>
+                `;
             }
+            
+            bookingList.innerHTML = htmlContent;
+            console.log('✅ 顯示更新完成');
         }
 
-        // 處理鍵盤事件
         function handleKeyDown(event) {
             if (event.key === 'Enter') {
                 const activeElement = document.activeElement;
-                if (activeElement && ['playerName', 'month', 'day', 'time'].includes(activeElement.id)) {
+                if (activeElement && activeElement.id === 'playerName') {
                     addBooking();
                 }
             }
         }
 
-        // 開始定期同步
         function startPeriodicSync() {
-            // 清除舊的間隔
-            if (syncInterval) {
-                clearInterval(syncInterval);
-            }
-            
-            // 每15秒同步一次數據
-            syncInterval = setInterval(async () => {
+            console.log('⏰ 開始定期同步 (每15秒)');
+            setInterval(async () => {
                 if (isOnline) {
                     try {
+                        await loadNextGame();
                         await loadBookings();
                     } catch (error) {
                         console.error('定期同步失敗:', error);
@@ -827,73 +851,39 @@
             }, 15000);
         }
 
-        // 停止定期同步
-        function stopPeriodicSync() {
-            if (syncInterval) {
-                clearInterval(syncInterval);
-                syncInterval = null;
-            }
-        }
-
-        // 檢測網路狀態
-        function setupNetworkDetection() {
-            window.addEventListener('online', () => {
-                console.log('網路已恢復');
-                updateSyncInfo('網路已恢復，正在重新連接...');
-                setTimeout(initializeApp, 1000);
-            });
-
-            window.addEventListener('offline', () => {
-                console.log('網路已中斷');
-                updateConnectionStatus(false, '網路中斷');
-                updateSyncInfo('網路中斷');
-                stopPeriodicSync();
-            });
-        }
-
-        // 初始化應用
         async function initializeApp() {
+            console.log('🚀 初始化應用程式...');
+            
             try {
-                // 綁定預約按鈕事件
                 const bookingBtn = document.getElementById('bookingBtn');
                 if (bookingBtn) {
                     bookingBtn.addEventListener('click', addBooking);
                 }
                 
-                // 綁定鍵盤事件
                 document.addEventListener('keydown', handleKeyDown);
                 
-                // 設置網路檢測
-                setupNetworkDetection();
-                
-                // 載入初始數據
+                await loadNextGame();
                 await loadBookings();
-                
-                // 開始定期同步
                 startPeriodicSync();
                 
-                console.log('球友預約系統初始化完成 - 即時同步模式');
+                console.log('✅ 羅羽翔鷹隊預約系統初始化完成');
             } catch (error) {
-                console.error('初始化時發生錯誤:', error);
+                console.error('初始化失敗:', error);
                 updateConnectionStatus(false, '初始化失敗');
-                updateSyncInfo('連接失敗，請重新整理頁面');
             }
         }
 
-        // 等待DOM加載完成
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', initializeApp);
         } else {
             initializeApp();
         }
 
-        // 使函數全域可用（用於 onclick 事件）
+        // 使函數全域可用
         window.cancelBooking = cancelBooking;
+        window.quickBooking = quickBooking;
         
-        // 頁面關閉時清理
-        window.addEventListener('beforeunload', () => {
-            stopPeriodicSync();
-        });
+        console.log('📜 羅羽翔鷹隊預約系統腳本載入完成');
     </script>
 </body>
 </html>
