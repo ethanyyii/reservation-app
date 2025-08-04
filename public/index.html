@@ -6,358 +6,492 @@
     <title>🏸 羅羽翔鷹隊</title>
     <style>
         * {
+            margin: 0;
+            padding: 0;
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
         }
         
         body {
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            background: #f2f2f7;
+            color: #1c1c1e;
+            line-height: 1.6;
             min-height: 100vh;
-            font-size: 16px;
-            line-height: 1.5;
         }
         
         .container {
-            max-width: 400px;
+            max-width: 414px;
             margin: 0 auto;
-            padding: 20px;
+            min-height: 100vh;
+            background: #f2f2f7;
         }
-        
-        .card {
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            padding: 24px;
-            margin-bottom: 20px;
+
+        /* 頂部標題欄 */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 0.5px solid rgba(60, 60, 67, 0.36);
+            padding: 44px 20px 16px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
-        
+
         .title {
-            font-size: 24px;
-            font-weight: bold;
-            text-align: center;
-            color: #1e40af;
-            margin-bottom: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-        
-        .next-game-section {
-            background: linear-gradient(135deg, #dbeafe 0%, #e0f2fe 100%);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 24px;
-            text-align: center;
-            border: 2px solid #3b82f6;
-        }
-        
-        .next-game-title {
-            font-size: 16px;
-            color: #1e40af;
-            margin-bottom: 8px;
-            font-weight: 600;
-        }
-        
-        .next-game-info {
-            font-size: 20px;
-            font-weight: bold;
-            color: #1f2937;
+            font-size: 34px;
+            font-weight: 700;
+            color: #1c1c1e;
             margin-bottom: 4px;
         }
-        
+
+        .subtitle {
+            font-size: 16px;
+            color: #8e8e93;
+            font-weight: 400;
+        }
+
+        /* 卡片樣式 */
+        .card {
+            background: #ffffff;
+            border-radius: 16px;
+            margin: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+            border: 0.5px solid rgba(60, 60, 67, 0.18);
+            overflow: hidden;
+        }
+
+        .card-content {
+            padding: 24px;
+        }
+
+        /* 下一場羽球卡片 */
+        .next-game-card {
+            background: linear-gradient(135deg, #007aff 0%, #0051d5 100%);
+            color: white;
+            text-align: center;
+        }
+
+        .next-game-title {
+            font-size: 17px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            opacity: 0.9;
+        }
+
+        .next-game-info {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
         .next-game-time {
             font-size: 16px;
-            color: #6b7280;
+            opacity: 0.8;
         }
-        
+
+        /* 連接狀態 */
         .connection-status {
+            margin: 16px;
+            padding: 12px 16px;
+            border-radius: 12px;
             text-align: center;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 16px;
-            font-size: 14px;
+            font-size: 15px;
             font-weight: 500;
         }
-        
+
         .status-online {
-            background: #dcfce7;
-            color: #166534;
-            border: 1px solid #bbf7d0;
+            background: rgba(52, 199, 89, 0.15);
+            color: #30b46c;
+            border: 1px solid rgba(52, 199, 89, 0.3);
         }
-        
+
         .status-offline {
-            background: #fee2e2;
-            color: #991b1b;
-            border: 1px solid #fecaca;
+            background: rgba(255, 59, 48, 0.15);
+            color: #d70015;
+            border: 1px solid rgba(255, 59, 48, 0.3);
         }
-        
-        /* 快速預約按鈕區域 */
+
+        /* 快速預約區域 */
         .quick-booking-section {
-            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 24px;
-            border: 2px solid #f59e0b;
+            background: #ffffff;
         }
-        
+
         .quick-booking-title {
-            font-size: 16px;
-            color: #92400e;
-            margin-bottom: 12px;
-            text-align: center;
+            font-size: 22px;
             font-weight: 600;
+            color: #1c1c1e;
+            margin-bottom: 20px;
+            text-align: center;
         }
-        
+
         .name-buttons-grid {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 6px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
         }
-        
+
         .name-btn {
-            background: linear-gradient(135deg, #ffffff 0%, #fef3c7 100%);
-            border: 1px solid #f59e0b;
-            border-radius: 6px;
-            padding: 8px 4px;
-            font-size: 11px;
-            color: #92400e;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-align: center;
+            background: #f2f2f7;
+            border: 1.5px solid #d1d1d6;
+            border-radius: 12px;
+            padding: 12px 8px;
+            font-size: 15px;
             font-weight: 600;
-            min-height: 32px;
+            color: #1c1c1e;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+            min-height: 48px;
             display: flex;
             align-items: center;
             justify-content: center;
-            line-height: 1.2;
         }
-        
+
         .name-btn:hover {
-            background: linear-gradient(135deg, #fde68a 0%, #fbbf24 100%);
+            background: #e5e5ea;
+            border-color: #007aff;
             transform: translateY(-1px);
-            box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3);
-            color: #78350f;
         }
-        
+
         .name-btn:active {
             transform: translateY(0);
-            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            background: #d1d1d6;
         }
-        
+
         .name-btn:disabled {
-            background: #d1d5db;
-            color: #6b7280;
+            background: #d1d1d6;
+            color: #8e8e93;
             cursor: not-allowed;
             transform: none;
-            box-shadow: none;
+            opacity: 0.5;
         }
-        
+
+        /* 表單區域 */
         .form-section {
-            background: linear-gradient(90deg, #f0f9ff 0%, #e0f2fe 100%);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 24px;
+            background: #ffffff;
         }
-        
+
         .section-title {
-            font-size: 18px;
+            font-size: 22px;
             font-weight: 600;
-            margin-bottom: 16px;
-            color: #1e40af;
+            color: #1c1c1e;
+            margin-bottom: 20px;
             text-align: center;
         }
-        
+
         .input-group {
-            margin-bottom: 20px;
+            margin-bottom: 24px;
         }
-        
+
         input {
             width: 100%;
             padding: 16px;
-            border: 2px solid #bfdbfe;
-            border-radius: 8px;
-            font-size: 18px;
-            background: white;
-            transition: border-color 0.2s;
+            border: 1.5px solid #d1d1d6;
+            border-radius: 12px;
+            font-size: 17px;
+            background: #ffffff;
+            color: #1c1c1e;
             text-align: center;
+            transition: all 0.2s ease;
         }
-        
+
         input:focus {
             outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            border-color: #007aff;
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
         }
-        
+
+        input::placeholder {
+            color: #8e8e93;
+        }
+
         .btn {
             width: 100%;
-            padding: 20px;
-            background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%);
+            padding: 16px;
+            background: #007aff;
             color: white;
             border: none;
             border-radius: 12px;
-            font-size: 18px;
-            font-weight: 700;
+            font-size: 17px;
+            font-weight: 600;
             cursor: pointer;
-            min-height: 60px;
-            transition: all 0.2s;
+            transition: all 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
+            min-height: 56px;
         }
-        
+
         .btn:hover {
-            background: linear-gradient(90deg, #1d4ed8 0%, #1e40af 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+            background: #0051d5;
+            transform: translateY(-1px);
         }
-        
+
+        .btn:active {
+            transform: translateY(0);
+            background: #004bb8;
+        }
+
         .btn:disabled {
-            background: #9ca3af;
+            background: #d1d1d6;
+            color: #8e8e93;
             cursor: not-allowed;
             transform: none;
-            box-shadow: none;
         }
-        
+
+        /* 統計區域 */
         .stats-section {
-            background: linear-gradient(90deg, #dcfce7 0%, #dbeafe 100%);
+            background: rgba(52, 199, 89, 0.1);
+            border: 1px solid rgba(52, 199, 89, 0.3);
             border-radius: 12px;
             padding: 20px;
-            margin-bottom: 24px;
-        }
-        
-        .stats-content {
-            font-size: 18px;
-            font-weight: bold;
-            color: #1f2937;
             text-align: center;
+            margin: 16px;
         }
-        
+
+        .stats-content {
+            font-size: 20px;
+            font-weight: 600;
+            color: #30b46c;
+        }
+
+        /* 預約列表 */
         .booking-table {
-            background: white;
-            border-radius: 12px;
-            border: 1px solid #e5e7eb;
+            background: #ffffff;
+            border-radius: 16px;
             overflow: hidden;
-            margin-bottom: 20px;
+            margin: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+            border: 0.5px solid rgba(60, 60, 67, 0.18);
         }
-        
+
         .table-header {
-            background: #f8fafc;
-            padding: 16px;
-            border-bottom: 1px solid #e5e7eb;
+            background: #f2f2f7;
+            padding: 16px 20px;
+            border-bottom: 0.5px solid rgba(60, 60, 67, 0.18);
             font-weight: 600;
             text-align: center;
-            color: #1e40af;
+            color: #1c1c1e;
+            font-size: 17px;
         }
-        
+
         .booking-item {
             padding: 16px 20px;
-            border-bottom: 1px solid #f1f5f9;
+            border-bottom: 0.5px solid rgba(60, 60, 67, 0.18);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            transition: background-color 0.2s ease;
         }
-        
+
         .booking-item:last-child {
             border-bottom: none;
         }
-        
-        .booking-item.today {
-            background: #fef3c7;
-            border-left: 4px solid #f59e0b;
+
+        .booking-item:active {
+            background: #f2f2f7;
         }
-        
+
+        .booking-item.today {
+            background: rgba(255, 149, 0, 0.1);
+            border-left: 4px solid #ff9500;
+        }
+
         .booking-info {
             flex: 1;
         }
-        
+
         .booking-name {
-            font-size: 18px;
+            font-size: 17px;
             font-weight: 600;
-            color: #111827;
-            margin-bottom: 4px;
+            color: #1c1c1e;
+            margin-bottom: 2px;
         }
-        
+
         .booking-detail {
-            color: #6b7280;
-            font-size: 14px;
+            font-size: 15px;
+            color: #8e8e93;
         }
-        
+
         .cancel-btn {
-            background: #ef4444;
+            background: #ff3b30;
             color: white;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             padding: 8px 12px;
-            font-size: 12px;
+            font-size: 14px;
+            font-weight: 600;
             cursor: pointer;
+            transition: all 0.2s ease;
             margin-left: 12px;
-            transition: background 0.2s;
         }
-        
+
         .cancel-btn:hover {
-            background: #dc2626;
+            background: #d70015;
+            transform: translateY(-1px);
         }
-        
+
+        .cancel-btn:active {
+            transform: translateY(0);
+            background: #bf0013;
+        }
+
+        /* 空狀態 */
         .empty-state {
             text-align: center;
             padding: 40px 20px;
-            color: #6b7280;
+            color: #8e8e93;
+            margin: 16px;
         }
-        
+
+        .empty-state p {
+            margin-bottom: 8px;
+            font-size: 17px;
+        }
+
+        /* 隱藏類 */
         .hidden {
             display: none;
         }
-        
-        @media (max-width: 480px) {
+
+        /* 響應式設計 */
+        @media (min-width: 768px) {
             .container {
-                padding: 16px;
+                max-width: 600px;
+                margin: 20px auto;
+                border-radius: 24px;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+                overflow: hidden;
             }
-            
+
+            .header {
+                padding: 24px 20px 20px;
+                position: static;
+            }
+
+            .name-buttons-grid {
+                grid-template-columns: repeat(6, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
             .card {
+                margin: 12px;
+            }
+
+            .card-content {
                 padding: 20px;
             }
-            
+
+            .name-buttons-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 8px;
+            }
+
+            .name-btn {
+                font-size: 14px;
+                padding: 10px 6px;
+                min-height: 44px;
+            }
+
             .booking-item {
                 flex-direction: column;
                 gap: 12px;
                 align-items: flex-start;
             }
-            
+
             .cancel-btn {
                 margin-left: 0;
+                align-self: flex-end;
             }
-            
+        }
+
+        /* 深色模式支援 */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background: #000000;
+                color: #ffffff;
+            }
+
+            .container {
+                background: #000000;
+            }
+
+            .header {
+                background: rgba(28, 28, 30, 0.95);
+                border-bottom-color: rgba(84, 84, 88, 0.65);
+            }
+
+            .title {
+                color: #ffffff;
+            }
+
+            .card {
+                background: #1c1c1e;
+                border-color: rgba(84, 84, 88, 0.65);
+            }
+
+            .section-title {
+                color: #ffffff;
+            }
+
+            .booking-name {
+                color: #ffffff;
+            }
+
+            .table-header {
+                background: #2c2c2e;
+                color: #ffffff;
+            }
+
+            input {
+                background: #2c2c2e;
+                border-color: #48484a;
+                color: #ffffff;
+            }
+
             .name-btn {
-                font-size: 10px;
-                min-height: 28px;
-                padding: 6px 2px;
+                background: #2c2c2e;
+                border-color: #48484a;
+                color: #ffffff;
+            }
+
+            .name-btn:hover {
+                background: #3a3a3c;
+            }
+
+            .booking-item:active {
+                background: #2c2c2e;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="card">
+        <div class="header">
             <h1 class="title">🏸 羅羽翔鷹隊</h1>
+            <div class="subtitle">智能預約系統</div>
+        </div>
 
-            <div id="nextGameSection" class="next-game-section">
+        <div class="card next-game-card">
+            <div class="card-content">
                 <div class="next-game-title">可預約場次</div>
                 <div id="nextGameInfo" class="next-game-info">載入中...</div>
                 <div id="nextGameTime" class="next-game-time">上午9:00-12:00</div>
             </div>
+        </div>
 
-            <div id="connectionStatus" class="connection-status status-offline">
-                🟡 正在連接...
-            </div>
+        <div id="connectionStatus" class="connection-status status-offline">
+            🟡 正在連接...
+        </div>
 
-            <!-- 快速預約按鈕區域 -->
-            <div class="quick-booking-section">
-                <div class="quick-booking-title">👥 會員</div>
+        <div class="card quick-booking-section">
+            <div class="card-content">
+                <div class="quick-booking-title">👥 會員快速預約</div>
                 <div class="name-buttons-grid" id="nameButtonsGrid">
                     <button class="name-btn" onclick="quickBooking('黃老師')">黃老師</button>
                     <button class="name-btn" onclick="quickBooking('阿平')">阿平</button>
@@ -385,9 +519,14 @@
                     <button class="name-btn" onclick="quickBooking('許')">許</button>
                 </div>
             </div>
+        </div>
 
-            <div class="form-section">
-                <h2 class="section-title">臨打報名（晚上8點後未滿17人才開放）</h2>
+        <div class="card form-section">
+            <div class="card-content">
+                <h2 class="section-title">臨打報名</h2>
+                <p style="text-align: center; color: #8e8e93; font-size: 15px; margin-bottom: 20px;">
+                    晚上8點後未滿17人才開放
+                </p>
                 
                 <div class="input-group">
                     <input type="text" id="playerName" placeholder="請輸入你的姓名" maxlength="20" />
@@ -397,22 +536,22 @@
                     立即預約
                 </button>
             </div>
+        </div>
 
-            <div class="stats-section">
-                <div class="stats-content">
-                    已預約人數：<span id="totalCount">0</span> 人
-                </div>
+        <div class="stats-section">
+            <div class="stats-content">
+                已預約人數：<span id="totalCount">0</span> 人
             </div>
+        </div>
 
-            <div id="bookingTable" class="booking-table hidden">
-                <div class="table-header">📋出席名單</div>
-                <div id="bookingList"></div>
-            </div>
+        <div id="bookingTable" class="booking-table hidden">
+            <div class="table-header">📋 出席名單</div>
+            <div id="bookingList"></div>
+        </div>
 
-            <div id="emptyState" class="empty-state">
-                <p>目前沒有人預約</p>
-                <p>成為第一個預約的球友吧！</p>
-            </div>
+        <div id="emptyState" class="empty-state">
+            <p>目前沒有人預約</p>
+            <p>成為第一個預約的球友吧！</p>
         </div>
     </div>
 
