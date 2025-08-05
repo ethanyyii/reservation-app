@@ -603,13 +603,19 @@
                 currentHour: currentHour,
                 gameDay: gameDay,
                 isToday: nextGameInfo.isToday,
-                bookingCount: bookings.length
+                bookingCount: bookings.length,
+                gameDayName: nextGameInfo.dayName
             });
+            
+            // 人數檢查：超過17人就不能報名
+            if (bookings.length >= 17) {
+                return false;
+            }
             
             // 如果今天就是比賽日
             if (nextGameInfo.isToday) {
-                // 今天比賽日：只有在早上9點前且人數未滿17人才能報名
-                return currentHour < 9 && bookings.length < 17;
+                // 今天比賽日：只有在早上9點前才能報名
+                return currentHour < 9;
             }
             
             // 計算前一天是星期幾
@@ -617,8 +623,8 @@
             
             // 如果今天是前一天
             if (currentDay === previousDay) {
-                // 前一天：晚上8點後且人數未滿17人才能報名
-                return currentHour >= 20 && bookings.length < 17;
+                // 前一天：晚上8點後才能報名
+                return currentHour >= 20;
             }
             
             // 其他時間都不能報名
@@ -640,7 +646,6 @@
             const playerNameInput = document.getElementById('playerName');
             const warningDiv = document.getElementById('warningMessage');
             
-            const isAvailable = checkCustomReservationAvailability();
             const now = new Date();
             const currentHour = now.getHours();
             const currentDay = now.getDay();
@@ -652,6 +657,8 @@
                 warningDiv.style.display = 'block';
                 return;
             }
+            
+            const isAvailable = checkCustomReservationAvailability();
             
             if (isAvailable && isOnline) {
                 bookingBtn.disabled = false;
@@ -672,25 +679,38 @@
                     if (currentHour >= 9) {
                         warningMessage = '今天比賽已開始，無法報名';
                     } else {
-                        warningMessage = `今天比賽日，${9 - currentHour}小時後開始`;
+                        warningMessage = `今天比賽日，還有 ${9 - currentHour} 小時開始`;
                     }
                 } else {
                     const gameDay = getGameDayFromInfo(nextGameInfo.dayName);
                     const previousDay = (gameDay === 0 ? 6 : gameDay - 1);
+                    const dayNames = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
                     
                     if (currentDay === previousDay) {
                         if (currentHour < 20) {
-                            warningMessage = `前一天晚上8點後才開放 (還有${20 - currentHour}小時)`;
+                            warningMessage = `今天晚上8點後開放 (還有 ${20 - currentHour} 小時)`;
+                        } else {
+                            warningMessage = '現在可以報名！';
                         }
+                    } else if (currentDay < previousDay || (currentDay === 6 && previousDay === 0)) {
+                        warningMessage = `${dayNames[previousDay]}晚上8點後開放`;
                     } else {
-                        const dayNames = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
-                        warningMessage = `${dayNames[previousDay]}晚上8點後才開放`;
+                        warningMessage = `下次 ${dayNames[previousDay]}晚上8點後開放`;
                     }
                 }
                 
                 warningDiv.textContent = warningMessage;
                 warningDiv.style.display = 'block';
             }
+            
+            console.log('📱 UI更新:', {
+                isAvailable,
+                isOnline,
+                currentHour,
+                currentDay,
+                gameDay: nextGameInfo ? getGameDayFromInfo(nextGameInfo.dayName) : null,
+                bookingCount: bookings.length
+            });
         }
 
         // 快速預約功能
