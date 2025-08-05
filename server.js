@@ -113,6 +113,103 @@ function getNextGameDate() {
     return result;
 }
 
+// 🆕 新增：檢查臨打報名是否開放
+function checkCustomReservationTime(nextGame, currentBookingsCount, memberNames = []) {
+    const taiwanNow = getTaiwanTime();
+    const currentHour = taiwanNow.getHours();
+    const currentDay = taiwanNow.getDay(); // 0=週日, 1=週一, ..., 6=週六
+    
+    // 打球日：週一(1)、週三(3)、週五(5)
+    const gameDays = [1, 3, 5];
+    
+    // 解析下一場羽球的星期
+    const gameDay = getGameDayNumber(nextGame.dayName);
+    
+    console.log('🕐 檢查臨打報名時間:', {
+        currentDay: currentDay,
+        currentHour: currentHour,
+        gameDay: gameDay,
+        isToday: nextGame.isToday,
+        bookingCount: currentBookingsCount,
+        gameDayName: nextGame.dayName
+    });
+    
+    // 人數檢查：超過17人就不能報名
+    if (currentBookingsCount >= 17) {
+        return {
+            allowed: false,
+            reason: '人數已滿 (17人)',
+            code: 'FULL_CAPACITY'
+        };
+    }
+    
+    // 如果今天就是比賽日
+    if (nextGame.isToday) {
+        if (currentHour >= 9) {
+            return {
+                allowed: false,
+                reason: '今天比賽已開始，無法報名',
+                code: 'GAME_STARTED'
+            };
+        } else {
+            // 今天比賽日且還沒9點，允許會員報名，臨打需檢查是否從昨晚8點開始
+            const yesterday = currentDay === 0 ? 6 : currentDay - 1;
+            return {
+                allowed: true,
+                reason: '今天比賽日，早上9點前可報名',
+                code: 'GAME_DAY_BEFORE_START'
+            };
+        }
+    }
+    
+    // 計算前一天是星期幾
+    const previousDay = (gameDay === 0 ? 6 : gameDay - 1);
+    
+    // 如果今天是前一天
+    if (currentDay === previousDay) {
+        if (currentHour >= 20) {
+            return {
+                allowed: true,
+                reason: '前一天晚上8點後，臨打報名開放',
+                code: 'PREVIOUS_DAY_EVENING'
+            };
+        } else {
+            return {
+                allowed: false,
+                reason: `前一天晚上8點後才開放 (還有 ${20 - currentHour} 小時)`,
+                code: 'TOO_EARLY'
+            };
+        }
+    }
+    
+    // 其他時間都不能臨打報名
+    const dayNames = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
+    return {
+        allowed: false,
+        reason: `${dayNames[previousDay]}晚上8點後才開放臨打報名`,
+        code: 'WRONG_DAY'
+    };
+}
+
+// 輔助函數：將中文星期轉換為數字
+function getGameDayNumber(dayName) {
+    const dayMap = {
+        '週日': 0, '週一': 1, '週二': 2, '週三': 3, 
+        '週四': 4, '週五': 5, '週六': 6
+    };
+    return dayMap[dayName] || 0;
+}
+
+// 檢查是否為預設會員
+function isMember(name) {
+    const members = [
+        '黃老師', '阿平', '我', '皮', '張清文', '文姿', '智宇', '克拉克',
+        'Ben', '雄', '明正', '曜竹', '阿生', '哲維', '查理王', '🦅',
+        '怡姍', '控', '彥皓', '海哥', '阿嘉', '許'
+    ];
+    return members.includes(name.trim());
+}
+
 // 清理過期預約
 function cleanupExpiredBookings(bookings) {
     const taiwanNow = getTaiwanTime();
@@ -186,7 +283,7 @@ app.get('/api/bookings', async (req, res) => {
     }
 });
 
-// 新增預約
+// 🆕 修改：新增預約 - 加入時間限制檢查
 app.post('/api/bookings', async (req, res) => {
     try {
         const { name } = req.body;
@@ -214,6 +311,23 @@ app.post('/api/bookings', async (req, res) => {
             });
         }
         
+        // 🆕 檢查是否為會員
+        const isUserMember = isMember(name.trim());
+        
+        // 🆕 如果不是會員，需要檢查臨打報名時間限制
+        if (!isUserMember) {
+            const timeCheck = checkCustomReservationTime(nextGame, bookings.length);
+            
+            if (!timeCheck.allowed) {
+                console.log(`❌ 臨打報名被拒絕: ${name} - ${timeCheck.reason}`);
+                return res.status(400).json({
+                    success: false,
+                    message: `臨打報名限制：${timeCheck.reason}`,
+                    code: timeCheck.code
+                });
+            }
+        }
+        
         const newBooking = {
             id: generateId(),
             name: name.trim(),
@@ -221,13 +335,16 @@ app.post('/api/bookings', async (req, res) => {
             gameDayName: nextGame.dayName,
             gameDateString: nextGame.dateString,
             gameTime: '上午9:00-12:00',
+            isMember: isUserMember,
             createdAt: new Date().toISOString()
         };
         
         bookings.push(newBooking);
         await writeBookings(bookings);
         
-        console.log(`🏸 新增羽球預約: ${name} - ${nextGame.dayName} ${nextGame.dateString}`);
+        const memberType = isUserMember ? '會員' : '臨打';
+        console.log(`🏸 新增羽球預約 (${memberType}): ${name} - ${nextGame.dayName} ${nextGame.dateString}`);
+        
         res.json({ 
             success: true, 
             booking: newBooking,
