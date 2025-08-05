@@ -208,6 +208,12 @@
             color: #8e8e93;
         }
 
+        input:disabled {
+            background: #f2f2f7;
+            color: #8e8e93;
+            cursor: not-allowed;
+        }
+
         .btn {
             width: 100%;
             padding: 16px;
@@ -241,6 +247,20 @@
             color: #8e8e93;
             cursor: not-allowed;
             transform: none;
+        }
+
+        /* 警告訊息 */
+        .warning-message {
+            color: #d70015;
+            font-size: 14px;
+            font-weight: 500;
+            text-align: center;
+            margin-top: 12px;
+            padding: 8px;
+            background: rgba(255, 59, 48, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 59, 48, 0.3);
+            display: none;
         }
 
         /* 統計區域 */
@@ -525,7 +545,7 @@
             <div class="card-content">
                 <h2 class="section-title">臨打報名</h2>
                 <p style="text-align: center; color: #8e8e93; font-size: 15px; margin-bottom: 20px;">
-                    晚上8點後未滿17人才開放
+                    前一天晚上8點後未滿17人才開放
                 </p>
                 
                 <div class="input-group">
@@ -535,6 +555,8 @@
                 <button type="button" class="btn" id="bookingBtn" disabled>
                     立即預約
                 </button>
+
+                <div id="warningMessage" class="warning-message"></div>
             </div>
         </div>
 
@@ -565,7 +587,113 @@
         let isOnline = false;
         let nextGameInfo = null;
 
-        // 新增：快速預約功能
+        // 檢查臨打報名是否開放
+        function checkCustomReservationAvailability() {
+            if (!nextGameInfo) return false;
+            
+            const now = new Date();
+            const currentHour = now.getHours();
+            const currentDay = now.getDay(); // 0=週日, 1=週一, ..., 6=週六
+            
+            // 解析下一場羽球的日期資訊
+            const gameDay = getGameDayFromInfo(nextGameInfo.dayName);
+            
+            console.log('🕐 檢查臨打報名資格:', {
+                currentDay: currentDay,
+                currentHour: currentHour,
+                gameDay: gameDay,
+                isToday: nextGameInfo.isToday,
+                bookingCount: bookings.length
+            });
+            
+            // 如果今天就是比賽日
+            if (nextGameInfo.isToday) {
+                // 今天比賽日：只有在早上9點前且人數未滿17人才能報名
+                return currentHour < 9 && bookings.length < 17;
+            }
+            
+            // 計算前一天是星期幾
+            const previousDay = (gameDay === 0 ? 6 : gameDay - 1);
+            
+            // 如果今天是前一天
+            if (currentDay === previousDay) {
+                // 前一天：晚上8點後且人數未滿17人才能報名
+                return currentHour >= 20 && bookings.length < 17;
+            }
+            
+            // 其他時間都不能報名
+            return false;
+        }
+        
+        // 將中文星期轉換為數字
+        function getGameDayFromInfo(dayName) {
+            const dayMap = {
+                '週日': 0, '週一': 1, '週二': 2, '週三': 3, 
+                '週四': 4, '週五': 5, '週六': 6
+            };
+            return dayMap[dayName] || 0;
+        }
+        
+        // 更新臨打報名UI狀態
+        function updateCustomReservationUI() {
+            const bookingBtn = document.getElementById('bookingBtn');
+            const playerNameInput = document.getElementById('playerName');
+            const warningDiv = document.getElementById('warningMessage');
+            
+            const isAvailable = checkCustomReservationAvailability();
+            const now = new Date();
+            const currentHour = now.getHours();
+            const currentDay = now.getDay();
+            
+            if (!nextGameInfo) {
+                bookingBtn.disabled = true;
+                playerNameInput.disabled = true;
+                warningDiv.textContent = '載入場次資訊中...';
+                warningDiv.style.display = 'block';
+                return;
+            }
+            
+            if (isAvailable && isOnline) {
+                bookingBtn.disabled = false;
+                playerNameInput.disabled = false;
+                warningDiv.style.display = 'none';
+            } else {
+                bookingBtn.disabled = true;
+                playerNameInput.disabled = true;
+                
+                // 顯示相應的警告訊息
+                let warningMessage = '';
+                
+                if (!isOnline) {
+                    warningMessage = '系統離線中';
+                } else if (bookings.length >= 17) {
+                    warningMessage = '人數已滿 (17人)';
+                } else if (nextGameInfo.isToday) {
+                    if (currentHour >= 9) {
+                        warningMessage = '今天比賽已開始，無法報名';
+                    } else {
+                        warningMessage = `今天比賽日，${9 - currentHour}小時後開始`;
+                    }
+                } else {
+                    const gameDay = getGameDayFromInfo(nextGameInfo.dayName);
+                    const previousDay = (gameDay === 0 ? 6 : gameDay - 1);
+                    
+                    if (currentDay === previousDay) {
+                        if (currentHour < 20) {
+                            warningMessage = `前一天晚上8點後才開放 (還有${20 - currentHour}小時)`;
+                        }
+                    } else {
+                        const dayNames = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
+                        warningMessage = `${dayNames[previousDay]}晚上8點後才開放`;
+                    }
+                }
+                
+                warningDiv.textContent = warningMessage;
+                warningDiv.style.display = 'block';
+            }
+        }
+
+        // 快速預約功能
         async function quickBooking(name) {
             console.log('⚡ 快速預約:', name);
             
@@ -598,157 +726,6 @@
                     alert(`${name} 已經預約過了！`);
                 } else {
                     alert(`${name} 預約失敗，請重試`);
-                }
-                
-                updateConnectionStatus(false, '預約失敗');
-            } finally {
-                // 重新啟用按鈕
-                if (targetButton) {
-                    targetButton.disabled = false;
-                    targetButton.style.opacity = '1';
-                }
-            }
-        }
-
-        function updateConnectionStatus(online, message = '') {
-            isOnline = online;
-            const statusElement = document.getElementById('connectionStatus');
-            const bookingBtn = document.getElementById('bookingBtn');
-            const nameButtons = document.querySelectorAll('.name-btn');
-            
-            if (online) {
-                statusElement.className = 'connection-status status-online';
-                statusElement.textContent = '🟢 系統已連線';
-                bookingBtn.disabled = false;
-                
-                // 啟用快速預約按鈕
-                nameButtons.forEach(btn => {
-                    btn.disabled = false;
-                    btn.style.opacity = '1';
-                });
-                
-                console.log('✅ 連線成功');
-            } else {
-                statusElement.className = 'connection-status status-offline';
-                statusElement.textContent = '🔴 連線中斷' + (message ? ' - ' + message : '');
-                bookingBtn.disabled = true;
-                
-                // 禁用快速預約按鈕
-                nameButtons.forEach(btn => {
-                    btn.disabled = true;
-                    btn.style.opacity = '0.5';
-                });
-                
-                console.log('❌ 連線失敗:', message);
-            }
-        }
-
-        async function apiRequest(endpoint, options = {}) {
-            const url = `${API_BASE_URL}${endpoint}`;
-            console.log('🌐 API 請求:', url);
-            
-            try {
-                const response = await fetch(url, {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        ...options.headers
-                    },
-                    timeout: 10000,
-                    ...options
-                });
-                
-                console.log('📡 API 回應狀態:', response.status);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                return data;
-            } catch (error) {
-                console.error('💥 API 請求失敗:', error);
-                throw error;
-            }
-        }
-
-        async function loadNextGame() {
-            try {
-                const data = await apiRequest('/next-game');
-                nextGameInfo = data.nextGame;
-                
-                const nextGameInfoElement = document.getElementById('nextGameInfo');
-                const displayText = nextGameInfo.isToday ? 
-                    `今天 ${nextGameInfo.dateString} (${nextGameInfo.dayName})` :
-                    `${nextGameInfo.dayName} ${nextGameInfo.dateString}`;
-                
-                nextGameInfoElement.textContent = displayText;
-                
-                const bookingBtn = document.getElementById('bookingBtn');
-                bookingBtn.innerHTML = '立即預約';
-                
-                console.log('📅 下一場羽球:', nextGameInfo);
-            } catch (error) {
-                console.error('載入下一場羽球失敗:', error);
-            }
-        }
-
-        async function loadBookings() {
-            console.log('📥 正在載入預約...');
-            try {
-                const data = await apiRequest('/bookings');
-                bookings = data.bookings || [];
-                console.log('📋 載入的預約:', bookings);
-                updateDisplay();
-                updateConnectionStatus(true);
-            } catch (error) {
-                console.error('載入預約失敗:', error.message);
-                updateConnectionStatus(false, '無法載入資料');
-            }
-        }
-
-        async function addBooking() {
-            console.log('➕ 開始新增預約...');
-            
-            if (!isOnline) {
-                alert('目前離線，無法預約');
-                return;
-            }
-
-            const name = document.getElementById('playerName').value?.trim();
-            
-            if (!name) {
-                alert('請輸入你的姓名');
-                document.getElementById('playerName').focus();
-                return;
-            }
-
-            if (name.length > 20) {
-                alert('姓名不能超過20個字');
-                return;
-            }
-
-            try {
-                const response = await apiRequest('/bookings', {
-                    method: 'POST',
-                    body: JSON.stringify({ name: name })
-                });
-
-                document.getElementById('playerName').value = '';
-                await loadBookings();
-                alert(response.message || '預約成功！');
-
-            } catch (error) {
-                console.error('預約失敗:', error.message);
-                
-                if (error.message.includes('400')) {
-                    try {
-                        const errorResponse = await error.response?.json();
-                        alert(errorResponse?.message || '預約失敗：可能已經預約過了');
-                    } catch {
-                        alert('預約失敗：可能已經預約過了');
-                    }
-                } else {
-                    alert('預約失敗，請重試');
                 }
                 
                 updateConnectionStatus(false, '預約失敗');
@@ -788,6 +765,9 @@
             const bookingList = document.getElementById('bookingList');
 
             totalCount.textContent = bookings.length;
+
+            // 更新臨打報名UI狀態
+            updateCustomReservationUI();
 
             if (bookings.length === 0) {
                 bookingTable.className = 'booking-table hidden';
@@ -843,12 +823,21 @@
                     try {
                         await loadNextGame();
                         await loadBookings();
+                        // 每次同步時更新UI狀態
+                        updateCustomReservationUI();
                     } catch (error) {
                         console.error('定期同步失敗:', error);
                         updateConnectionStatus(false, '同步中斷');
                     }
                 }
             }, 15000);
+            
+            // 每分鐘檢查一次時間限制（更頻繁地檢查）
+            setInterval(() => {
+                if (isOnline && nextGameInfo) {
+                    updateCustomReservationUI();
+                }
+            }, 60000);
         }
 
         async function initializeApp() {
@@ -886,4 +875,161 @@
         console.log('📜 羅羽翔鷹隊預約系統腳本載入完成');
     </script>
 </body>
-</html>
+</html>敗');
+            } finally {
+                // 重新啟用按鈕
+                if (targetButton) {
+                    targetButton.disabled = false;
+                    targetButton.style.opacity = '1';
+                }
+            }
+        }
+
+        function updateConnectionStatus(online, message = '') {
+            isOnline = online;
+            const statusElement = document.getElementById('connectionStatus');
+            const nameButtons = document.querySelectorAll('.name-btn');
+            
+            if (online) {
+                statusElement.className = 'connection-status status-online';
+                statusElement.textContent = '🟢 系統已連線';
+                
+                // 啟用快速預約按鈕
+                nameButtons.forEach(btn => {
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                });
+                
+                // 更新臨打報名UI
+                updateCustomReservationUI();
+                
+                console.log('✅ 連線成功');
+            } else {
+                statusElement.className = 'connection-status status-offline';
+                statusElement.textContent = '🔴 連線中斷' + (message ? ' - ' + message : '');
+                
+                // 禁用快速預約按鈕
+                nameButtons.forEach(btn => {
+                    btn.disabled = true;
+                    btn.style.opacity = '0.5';
+                });
+                
+                // 更新臨打報名UI
+                updateCustomReservationUI();
+                
+                console.log('❌ 連線失敗:', message);
+            }
+        }
+
+        async function apiRequest(endpoint, options = {}) {
+            const url = `${API_BASE_URL}${endpoint}`;
+            console.log('🌐 API 請求:', url);
+            
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    },
+                    timeout: 10000,
+                    ...options
+                });
+                
+                console.log('📡 API 回應狀態:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('💥 API 請求失敗:', error);
+                throw error;
+            }
+        }
+
+        async function loadNextGame() {
+            try {
+                const data = await apiRequest('/next-game');
+                nextGameInfo = data.nextGame;
+                
+                const nextGameInfoElement = document.getElementById('nextGameInfo');
+                const displayText = nextGameInfo.isToday ? 
+                    `今天 ${nextGameInfo.dateString} (${nextGameInfo.dayName})` :
+                    `${nextGameInfo.dayName} ${nextGameInfo.dateString}`;
+                
+                nextGameInfoElement.textContent = displayText;
+                
+                console.log('📅 下一場羽球:', nextGameInfo);
+            } catch (error) {
+                console.error('載入下一場羽球失敗:', error);
+            }
+        }
+
+        async function loadBookings() {
+            console.log('📥 正在載入預約...');
+            try {
+                const data = await apiRequest('/bookings');
+                bookings = data.bookings || [];
+                console.log('📋 載入的預約:', bookings);
+                updateDisplay();
+                updateConnectionStatus(true);
+            } catch (error) {
+                console.error('載入預約失敗:', error.message);
+                updateConnectionStatus(false, '無法載入資料');
+            }
+        }
+
+        async function addBooking() {
+            console.log('➕ 開始新增預約...');
+            
+            if (!isOnline) {
+                alert('目前離線，無法預約');
+                return;
+            }
+            
+            // 檢查臨打報名是否開放
+            if (!checkCustomReservationAvailability()) {
+                alert('臨打報名尚未開放或已關閉');
+                return;
+            }
+
+            const name = document.getElementById('playerName').value?.trim();
+            
+            if (!name) {
+                alert('請輸入你的姓名');
+                document.getElementById('playerName').focus();
+                return;
+            }
+
+            if (name.length > 20) {
+                alert('姓名不能超過20個字');
+                return;
+            }
+
+            try {
+                const response = await apiRequest('/bookings', {
+                    method: 'POST',
+                    body: JSON.stringify({ name: name })
+                });
+
+                document.getElementById('playerName').value = '';
+                await loadBookings();
+                alert(response.message || '預約成功！');
+
+            } catch (error) {
+                console.error('預約失敗:', error.message);
+                
+                if (error.message.includes('400')) {
+                    try {
+                        const errorResponse = await error.response?.json();
+                        alert(errorResponse?.message || '預約失敗：可能已經預約過了');
+                    } catch {
+                        alert('預約失敗：可能已經預約過了');
+                    }
+                } else {
+                    alert('預約失敗，請重試');
+                }
+                
+                updateConnectionStatus(false, '預約失
