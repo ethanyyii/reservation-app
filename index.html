@@ -529,8 +529,6 @@
                     <button class="name-btn" onclick="quickBooking('哲維')">哲維</button>
                     <button class="name-btn" onclick="quickBooking('查理王')">查理王</button>
                     <button class="name-btn" onclick="quickBooking('🦅')">🦅</button>
-                    <button class="name-btn" onclick="quickBooking('皮')">皮</button>
-                    <button class="name-btn" onclick="quickBooking('曜竹')">曜竹</button>
                     <button class="name-btn" onclick="quickBooking('怡姍')">怡姍</button>
                     <button class="name-btn" onclick="quickBooking('控')">控</button>
                     <button class="name-btn" onclick="quickBooking('彥皓')">彥皓</button>
@@ -740,15 +738,24 @@
                 alert(`${name} 預約成功！`);
 
             } catch (error) {
-                console.error('快速預約失敗:', error.message);
+                console.error('快速預約失敗:', error);
                 
-                if (error.message.includes('400')) {
+                // 改進錯誤處理
+                if (error.data && error.data.message) {
+                    alert(error.data.message);
+                } else if (error.message.includes('400')) {
                     alert(`${name} 已經預約過了！`);
                 } else {
                     alert(`${name} 預約失敗，請重試`);
                 }
                 
                 updateConnectionStatus(false, '預約失敗');
+            } finally {
+                // 重新啟用按鈕
+                if (targetButton) {
+                    targetButton.disabled = false;
+                    targetButton.style.opacity = '1';
+                }
             }
         }
 
@@ -770,7 +777,7 @@
                     alert('預約已取消');
                 }
             } catch (error) {
-                console.error('取消預約失敗:', error.message);
+                console.error('取消預約失敗:', error);
                 alert('取消預約失敗，請重試');
                 updateConnectionStatus(false, '取消失敗');
             }
@@ -860,51 +867,6 @@
             }, 60000);
         }
 
-        async function initializeApp() {
-            console.log('🚀 初始化應用程式...');
-            
-            try {
-                const bookingBtn = document.getElementById('bookingBtn');
-                if (bookingBtn) {
-                    bookingBtn.addEventListener('click', addBooking);
-                }
-                
-                document.addEventListener('keydown', handleKeyDown);
-                
-                await loadNextGame();
-                await loadBookings();
-                startPeriodicSync();
-                
-                console.log('✅ 羅羽翔鷹隊預約系統初始化完成');
-            } catch (error) {
-                console.error('初始化失敗:', error);
-                updateConnectionStatus(false, '初始化失敗');
-            }
-        }
-
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initializeApp);
-        } else {
-            initializeApp();
-        }
-
-        // 使函數全域可用
-        window.cancelBooking = cancelBooking;
-        window.quickBooking = quickBooking;
-        
-        console.log('📜 羅羽翔鷹隊預約系統腳本載入完成');
-    </script>
-</body>
-</html>敗');
-            } finally {
-                // 重新啟用按鈕
-                if (targetButton) {
-                    targetButton.disabled = false;
-                    targetButton.style.opacity = '1';
-                }
-            }
-        }
-
         function updateConnectionStatus(online, message = '') {
             isOnline = online;
             const statusElement = document.getElementById('connectionStatus');
@@ -941,6 +903,7 @@
             }
         }
 
+        // 改進的 API 請求函數
         async function apiRequest(endpoint, options = {}) {
             const url = `${API_BASE_URL}${endpoint}`;
             console.log('🌐 API 請求:', url);
@@ -957,11 +920,16 @@
                 
                 console.log('📡 API 回應狀態:', response.status);
                 
+                const data = await response.json();
+                
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    // 創建包含回應數據的錯誤對象
+                    const error = new Error(`HTTP error! status: ${response.status}`);
+                    error.status = response.status;
+                    error.data = data;
+                    throw error;
                 }
                 
-                const data = await response.json();
                 return data;
             } catch (error) {
                 console.error('💥 API 請求失敗:', error);
@@ -996,7 +964,7 @@
                 updateDisplay();
                 updateConnectionStatus(true);
             } catch (error) {
-                console.error('載入預約失敗:', error.message);
+                console.error('載入預約失敗:', error);
                 updateConnectionStatus(false, '無法載入資料');
             }
         }
@@ -1039,17 +1007,59 @@
                 alert(response.message || '預約成功！');
 
             } catch (error) {
-                console.error('預約失敗:', error.message);
+                console.error('預約失敗:', error);
                 
-                if (error.message.includes('400')) {
-                    try {
-                        const errorResponse = await error.response?.json();
-                        alert(errorResponse?.message || '預約失敗：可能已經預約過了');
-                    } catch {
-                        alert('預約失敗：可能已經預約過了');
+                // 改進錯誤處理
+                if (error.data && error.data.message) {
+                    if (error.data.isTimeRestriction) {
+                        alert(`臨打報名限制：${error.data.message.replace('臨打報名限制：', '')}`);
+                    } else {
+                        alert(error.data.message);
                     }
+                } else if (error.message.includes('400')) {
+                    alert('預約失敗：可能已經預約過了或時間限制');
                 } else {
                     alert('預約失敗，請重試');
                 }
                 
-                updateConnectionStatus(false, '預約失
+                // 重新載入數據以確保狀態同步
+                await loadBookings();
+            }
+        }
+
+        async function initializeApp() {
+            console.log('🚀 初始化應用程式...');
+            
+            try {
+                const bookingBtn = document.getElementById('bookingBtn');
+                if (bookingBtn) {
+                    bookingBtn.addEventListener('click', addBooking);
+                }
+                
+                document.addEventListener('keydown', handleKeyDown);
+                
+                await loadNextGame();
+                await loadBookings();
+                startPeriodicSync();
+                
+                console.log('✅ 羅羽翔鷹隊預約系統初始化完成');
+            } catch (error) {
+                console.error('初始化失敗:', error);
+                updateConnectionStatus(false, '初始化失敗');
+            }
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeApp);
+        } else {
+            initializeApp();
+        }
+
+        // 使函數全域可用
+        window.cancelBooking = cancelBooking;
+        window.quickBooking = quickBooking;
+        
+        console.log('📜 羅羽翔鷹隊預約系統腳本載入完成');
+    </script>
+</body>
+</html>

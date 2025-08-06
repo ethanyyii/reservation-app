@@ -1,0 +1,2111 @@
+=== 羽毛球預約網站專案總覽 ===
+
+=== package.json ===
+{
+  "name": "reservation-app",
+  "version": "1.0.0",
+  "description": "球友預約系統",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "heroku": "^8.7.1"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ethanyyii/reservation-app.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ethanyyii/reservation-app/issues"
+  },
+  "homepage": "https://github.com/ethanyyii/reservation-app#readme"
+}
+
+=== server.js ===
+const express = require('express');
+const cors = require('cors');
+const fs = require('fs').promises;
+const path = require('path');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+const DATA_FILE = path.join(__dirname, 'bookings.json');
+
+// 中間件設置
+app.use(cors());
+app.use(express.json());
+app.use(express.static('public'));
+
+// 確保數據文件存在
+async function ensureDataFile() {
+    try {
+        await fs.access(DATA_FILE);
+        console.log('✅ 數據文件已存在');
+    } catch (error) {
+        const initialData = { bookings: [] };
+        await fs.writeFile(DATA_FILE, JSON.stringify(initialData, null, 2));
+        console.log('✅ 創建了數據文件');
+    }
+}
+
+// 讀取預約數據
+async function readBookings() {
+    try {
+        const data = await fs.readFile(DATA_FILE, 'utf8');
+        const jsonData = JSON.parse(data);
+        return jsonData.bookings || [];
+    } catch (error) {
+        console.error('讀取數據失敗:', error);
+        return [];
+    }
+}
+
+// 寫入預約數據
+async function writeBookings(bookings) {
+    try {
+        const data = { bookings: bookings, lastUpdated: new Date().toISOString() };
+        await fs.writeFile(DATA_FILE, JSON.stringify(data, null, 2));
+        return true;
+    } catch (error) {
+        console.error('寫入數據失敗:', error);
+        return false;
+    }
+}
+
+// 🔧 修復：獲取台灣時間
+function getTaiwanTime() {
+    const now = new Date();
+    // 轉換為台灣時間 (UTC+8)
+    const taiwanTime = new Date(now.getTime() + (8 * 60 * 60 * 1000));
+    return taiwanTime;
+}
+
+// 🔧 修復：使用台灣時間判斷下一場羽球賽
+function getNextGameDate() {
+    const taiwanNow = getTaiwanTime();
+    const today = taiwanNow.getDay(); // 0=週日, 1=週一, 2=週二, 3=週三, 4=週四, 5=週五, 6=週六
+    const currentHour = taiwanNow.getHours();
+    
+    // 打球日：週一(1)、週三(3)、週五(5)
+    const gameDays = [1, 3, 5];
+    
+    console.log(`🕐 台灣現在時間：${taiwanNow.toLocaleString('zh-TW')} (星期${['日','一','二','三','四','五','六'][today]} ${currentHour}點)`);
+    
+    let nextGameDay;
+    let daysToAdd = 0;
+    let nextDate = new Date(taiwanNow);
+    let isToday = false;
+    
+    // 🔧 修復邏輯：如果今天是打球日且還沒到9點，可以預約今天
+    if (gameDays.includes(today) && currentHour < 9) {
+        console.log('✅ 今天是打球日且還沒到9點，可預約今天');
+        nextDate = new Date(taiwanNow);
+        nextGameDay = today;
+        daysToAdd = 0;
+        isToday = true;
+    } else {
+        console.log('⏭️ 今天不是打球日或已過9點，尋找下一場');
+        
+        // 找到今天之後的下一個打球日
+        const futureGameDays = gameDays.filter(day => day > today);
+        
+        if (futureGameDays.length > 0) {
+            // 本週還有打球日
+            nextGameDay = futureGameDays[0];
+            daysToAdd = nextGameDay - today;
+            console.log(`📅 本週還有打球日：星期${['日','一','二','三','四','五','六'][nextGameDay]} (${daysToAdd}天後)`);
+        } else {
+            // 本週沒有了，找下週的第一個打球日（週一）
+            nextGameDay = 1; // 週一
+            daysToAdd = 7 - today + 1;
+            console.log(`📅 本週沒有了，預約下週一 (${daysToAdd}天後)`);
+        }
+        
+        nextDate.setDate(taiwanNow.getDate() + daysToAdd);
+        isToday = false;
+    }
+    
+    const result = {
+        date: nextDate,
+        dayName: ['週日', '週一', '週二', '週三', '週四', '週五', '週六'][nextGameDay],
+        dateString: `${nextDate.getMonth() + 1}/${nextDate.getDate()}`,
+        fullDateString: `${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, '0')}-${String(nextDate.getDate()).padStart(2, '0')}`,
+        isToday: isToday
+    };
+    
+    console.log('🎯 下一場羽球:', result);
+    return result;
+}
+
+// 清理過期預約
+function cleanupExpiredBookings(bookings) {
+    const taiwanNow = getTaiwanTime();
+    const today = `${taiwanNow.getFullYear()}-${String(taiwanNow.getMonth() + 1).padStart(2, '0')}-${String(taiwanNow.getDate()).padStart(2, '0')}`;
+    const currentHour = taiwanNow.getHours();
+    
+    return bookings.filter(booking => {
+        if (booking.gameDate > today) return true;
+        if (booking.gameDate === today && currentHour < 12) return true; // 12點前保留當天預約
+        return false;
+    });
+}
+
+// 生成唯一ID
+function generateId() {
+    return Date.now().toString() + Math.random().toString(36).substr(2, 9);
+}
+
+// API 路由
+
+// 健康檢查
+app.get('/api/health', (req, res) => {
+    const taiwanNow = getTaiwanTime();
+    res.json({
+        success: true,
+        message: '智能羽球預約系統正常運行',
+        timestamp: new Date().toISOString(),
+        taiwanTime: taiwanNow.toLocaleString('zh-TW')
+    });
+});
+
+// 獲取下一場羽球賽信息
+app.get('/api/next-game', (req, res) => {
+    try {
+        const nextGame = getNextGameDate();
+        res.json({
+            success: true,
+            nextGame: {
+                dayName: nextGame.dayName,
+                dateString: nextGame.dateString,
+                fullDateString: nextGame.fullDateString,
+                time: '上午9:00-12:00',
+                isToday: nextGame.isToday
+            },
+            debug: {
+                taiwanTime: getTaiwanTime().toLocaleString('zh-TW'),
+                serverTime: new Date().toISOString()
+            }
+        });
+    } catch (error) {
+        console.error('獲取下一場羽球賽失敗:', error);
+        res.status(500).json({ success: false, message: '獲取下一場羽球賽失敗' });
+    }
+});
+
+// 獲取所有預約
+app.get('/api/bookings', async (req, res) => {
+    try {
+        let bookings = await readBookings();
+        bookings = cleanupExpiredBookings(bookings);
+        await writeBookings(bookings);
+        
+        res.json({
+            success: true,
+            bookings: bookings,
+            count: bookings.length
+        });
+    } catch (error) {
+        console.error('獲取預約失敗:', error);
+        res.status(500).json({ success: false, message: '獲取預約失敗' });
+    }
+});
+
+// 新增預約
+app.post('/api/bookings', async (req, res) => {
+    try {
+        const { name } = req.body;
+        
+        if (!name || !name.trim()) {
+            return res.status(400).json({ success: false, message: '請填寫球友姓名' });
+        }
+        
+        // 獲取下一場羽球賽信息
+        const nextGame = getNextGameDate();
+        
+        let bookings = await readBookings();
+        bookings = cleanupExpiredBookings(bookings);
+        
+        // 檢查是否已經預約過同一場
+        const duplicate = bookings.find(booking => 
+            booking.name.toLowerCase() === name.trim().toLowerCase() &&
+            booking.gameDate === nextGame.fullDateString
+        );
+        
+        if (duplicate) {
+            return res.status(400).json({
+                success: false,
+                message: `${name} 已經預約過這場羽球了！`
+            });
+        }
+        
+        const newBooking = {
+            id: generateId(),
+            name: name.trim(),
+            gameDate: nextGame.fullDateString,
+            gameDayName: nextGame.dayName,
+            gameDateString: nextGame.dateString,
+            gameTime: '上午9:00-12:00',
+            createdAt: new Date().toISOString()
+        };
+        
+        bookings.push(newBooking);
+        await writeBookings(bookings);
+        
+        console.log(`🏸 新增羽球預約: ${name} - ${nextGame.dayName} ${nextGame.dateString}`);
+        res.json({ 
+            success: true, 
+            booking: newBooking,
+            message: `${name} 成功預約 ${nextGame.dayName} ${nextGame.dateString} 的羽球！`
+        });
+        
+    } catch (error) {
+        console.error('新增預約失敗:', error);
+        res.status(500).json({ success: false, message: '新增預約失敗' });
+    }
+});
+
+// 刪除預約
+app.delete('/api/bookings/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        let bookings = await readBookings();
+        
+        const originalLength = bookings.length;
+        const deletedBooking = bookings.find(booking => booking.id === id);
+        bookings = bookings.filter(booking => booking.id !== id);
+        
+        if (bookings.length === originalLength) {
+            return res.status(404).json({ success: false, message: '找不到指定的預約' });
+        }
+        
+        await writeBookings(bookings);
+        console.log(`🗑️ 取消羽球預約: ${deletedBooking?.name}`);
+        res.json({ success: true, message: '預約已取消' });
+        
+    } catch (error) {
+        console.error('刪除預約失敗:', error);
+        res.status(500).json({ success: false, message: '刪除預約失敗' });
+    }
+});
+
+// 提供前端頁面
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// 啟動服務器
+async function startServer() {
+    await ensureDataFile();
+    app.listen(PORT, () => {
+        console.log(`🏸 智能羽球預約系統已啟動在 port ${PORT}`);
+        console.log(`🕐 台灣時間：${getTaiwanTime().toLocaleString('zh-TW')}`);
+    });
+}
+
+startServer();
+=== index.html (根目錄) ===
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏸 羅羽翔鷹隊</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            background: #f2f2f7;
+            color: #1c1c1e;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 414px;
+            margin: 0 auto;
+            min-height: 100vh;
+            background: #f2f2f7;
+        }
+
+        /* 頂部標題欄 */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 0.5px solid rgba(60, 60, 67, 0.36);
+            padding: 44px 20px 16px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .title {
+            font-size: 34px;
+            font-weight: 700;
+            color: #1c1c1e;
+            margin-bottom: 4px;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: #8e8e93;
+            font-weight: 400;
+        }
+
+        /* 卡片樣式 */
+        .card {
+            background: #ffffff;
+            border-radius: 16px;
+            margin: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+            border: 0.5px solid rgba(60, 60, 67, 0.18);
+            overflow: hidden;
+        }
+
+        .card-content {
+            padding: 24px;
+        }
+
+        /* 下一場羽球卡片 */
+        .next-game-card {
+            background: linear-gradient(135deg, #007aff 0%, #0051d5 100%);
+            color: white;
+            text-align: center;
+        }
+
+        .next-game-title {
+            font-size: 17px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            opacity: 0.9;
+        }
+
+        .next-game-info {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .next-game-time {
+            font-size: 16px;
+            opacity: 0.8;
+        }
+
+        /* 連接狀態 */
+        .connection-status {
+            margin: 16px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            text-align: center;
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        .status-online {
+            background: rgba(52, 199, 89, 0.15);
+            color: #30b46c;
+            border: 1px solid rgba(52, 199, 89, 0.3);
+        }
+
+        .status-offline {
+            background: rgba(255, 59, 48, 0.15);
+            color: #d70015;
+            border: 1px solid rgba(255, 59, 48, 0.3);
+        }
+
+        /* 快速預約區域 */
+        .quick-booking-section {
+            background: #ffffff;
+        }
+
+        .quick-booking-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: #1c1c1e;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .name-buttons-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+
+        .name-btn {
+            background: #f2f2f7;
+            border: 1.5px solid #d1d1d6;
+            border-radius: 12px;
+            padding: 12px 8px;
+            font-size: 15px;
+            font-weight: 600;
+            color: #1c1c1e;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .name-btn:hover {
+            background: #e5e5ea;
+            border-color: #007aff;
+            transform: translateY(-1px);
+        }
+
+        .name-btn:active {
+            transform: translateY(0);
+            background: #d1d1d6;
+        }
+
+        .name-btn:disabled {
+            background: #d1d1d6;
+            color: #8e8e93;
+            cursor: not-allowed;
+            transform: none;
+            opacity: 0.5;
+        }
+
+        /* 表單區域 */
+        .form-section {
+            background: #ffffff;
+        }
+
+        .section-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: #1c1c1e;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .input-group {
+            margin-bottom: 24px;
+        }
+
+        input {
+            width: 100%;
+            padding: 16px;
+            border: 1.5px solid #d1d1d6;
+            border-radius: 12px;
+            font-size: 17px;
+            background: #ffffff;
+            color: #1c1c1e;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #007aff;
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        }
+
+        input::placeholder {
+            color: #8e8e93;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            background: #007aff;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 56px;
+        }
+
+        .btn:hover {
+            background: #0051d5;
+            transform: translateY(-1px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+            background: #004bb8;
+        }
+
+        .btn:disabled {
+            background: #d1d1d6;
+            color: #8e8e93;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* 統計區域 */
+        .stats-section {
+            background: rgba(52, 199, 89, 0.1);
+            border: 1px solid rgba(52, 199, 89, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            margin: 16px;
+        }
+
+        .stats-content {
+            font-size: 20px;
+            font-weight: 600;
+            color: #30b46c;
+        }
+
+        /* 預約列表 */
+        .booking-table {
+            background: #ffffff;
+            border-radius: 16px;
+            overflow: hidden;
+            margin: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+            border: 0.5px solid rgba(60, 60, 67, 0.18);
+        }
+
+        .table-header {
+            background: #f2f2f7;
+            padding: 16px 20px;
+            border-bottom: 0.5px solid rgba(60, 60, 67, 0.18);
+            font-weight: 600;
+            text-align: center;
+            color: #1c1c1e;
+            font-size: 17px;
+        }
+
+        .booking-item {
+            padding: 16px 20px;
+            border-bottom: 0.5px solid rgba(60, 60, 67, 0.18);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.2s ease;
+        }
+
+        .booking-item:last-child {
+            border-bottom: none;
+        }
+
+        .booking-item:active {
+            background: #f2f2f7;
+        }
+
+        .booking-item.today {
+            background: rgba(255, 149, 0, 0.1);
+            border-left: 4px solid #ff9500;
+        }
+
+        .booking-info {
+            flex: 1;
+        }
+
+        .booking-name {
+            font-size: 17px;
+            font-weight: 600;
+            color: #1c1c1e;
+            margin-bottom: 2px;
+        }
+
+        .booking-detail {
+            font-size: 15px;
+            color: #8e8e93;
+        }
+
+        .cancel-btn {
+            background: #ff3b30;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-left: 12px;
+        }
+
+        .cancel-btn:hover {
+            background: #d70015;
+            transform: translateY(-1px);
+        }
+
+        .cancel-btn:active {
+            transform: translateY(0);
+            background: #bf0013;
+        }
+
+        /* 空狀態 */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #8e8e93;
+            margin: 16px;
+        }
+
+        .empty-state p {
+            margin-bottom: 8px;
+            font-size: 17px;
+        }
+
+        /* 隱藏類 */
+        .hidden {
+            display: none;
+        }
+
+        /* 響應式設計 */
+        @media (min-width: 768px) {
+            .container {
+                max-width: 600px;
+                margin: 20px auto;
+                border-radius: 24px;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+                overflow: hidden;
+            }
+
+            .header {
+                padding: 24px 20px 20px;
+                position: static;
+            }
+
+            .name-buttons-grid {
+                grid-template-columns: repeat(6, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .card {
+                margin: 12px;
+            }
+
+            .card-content {
+                padding: 20px;
+            }
+
+            .name-buttons-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 8px;
+            }
+
+            .name-btn {
+                font-size: 14px;
+                padding: 10px 6px;
+                min-height: 44px;
+            }
+
+            .booking-item {
+                flex-direction: column;
+                gap: 12px;
+                align-items: flex-start;
+            }
+
+            .cancel-btn {
+                margin-left: 0;
+                align-self: flex-end;
+            }
+        }
+
+        /* 深色模式支援 */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background: #000000;
+                color: #ffffff;
+            }
+
+            .container {
+                background: #000000;
+            }
+
+            .header {
+                background: rgba(28, 28, 30, 0.95);
+                border-bottom-color: rgba(84, 84, 88, 0.65);
+            }
+
+            .title {
+                color: #ffffff;
+            }
+
+            .card {
+                background: #1c1c1e;
+                border-color: rgba(84, 84, 88, 0.65);
+            }
+
+            .section-title {
+                color: #ffffff;
+            }
+
+            .booking-name {
+                color: #ffffff;
+            }
+
+            .table-header {
+                background: #2c2c2e;
+                color: #ffffff;
+            }
+
+            input {
+                background: #2c2c2e;
+                border-color: #48484a;
+                color: #ffffff;
+            }
+
+            .name-btn {
+                background: #2c2c2e;
+                border-color: #48484a;
+                color: #ffffff;
+            }
+
+            .name-btn:hover {
+                background: #3a3a3c;
+            }
+
+            .booking-item:active {
+                background: #2c2c2e;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">🏸 羅羽翔鷹隊</h1>
+            <div class="subtitle">智能預約系統</div>
+        </div>
+
+        <div class="card next-game-card">
+            <div class="card-content">
+                <div class="next-game-title">可預約場次</div>
+                <div id="nextGameInfo" class="next-game-info">載入中...</div>
+                <div id="nextGameTime" class="next-game-time">上午9:00-12:00</div>
+            </div>
+        </div>
+
+        <div id="connectionStatus" class="connection-status status-offline">
+            🟡 正在連接...
+        </div>
+
+        <div class="card quick-booking-section">
+            <div class="card-content">
+                <div class="quick-booking-title">👥 會員快速預約</div>
+                <div class="name-buttons-grid" id="nameButtonsGrid">
+                    <button class="name-btn" onclick="quickBooking('黃老師')">黃老師</button>
+                    <button class="name-btn" onclick="quickBooking('阿平')">阿平</button>
+                    <button class="name-btn" onclick="quickBooking('我')">我</button>
+                    <button class="name-btn" onclick="quickBooking('皮')">皮</button>
+                    <button class="name-btn" onclick="quickBooking('張清文')">張清文</button>
+                    <button class="name-btn" onclick="quickBooking('文姿')">文姿</button>
+                    <button class="name-btn" onclick="quickBooking('智宇')">智宇</button>
+                    <button class="name-btn" onclick="quickBooking('克拉克')">克拉克</button>
+                    <button class="name-btn" onclick="quickBooking('Ben')">Ben</button>
+                    <button class="name-btn" onclick="quickBooking('雄')">雄</button>
+                    <button class="name-btn" onclick="quickBooking('明正')">明正</button>
+                    <button class="name-btn" onclick="quickBooking('曜竹')">曜竹</button>
+                    <button class="name-btn" onclick="quickBooking('阿生')">阿生</button>
+                    <button class="name-btn" onclick="quickBooking('哲維')">哲維</button>
+                    <button class="name-btn" onclick="quickBooking('查理王')">查理王</button>
+                    <button class="name-btn" onclick="quickBooking('🦅')">🦅</button>
+                    <button class="name-btn" onclick="quickBooking('皮')">皮</button>
+                    <button class="name-btn" onclick="quickBooking('曜竹')">曜竹</button>
+                    <button class="name-btn" onclick="quickBooking('怡姍')">怡姍</button>
+                    <button class="name-btn" onclick="quickBooking('控')">控</button>
+                    <button class="name-btn" onclick="quickBooking('彥皓')">彥皓</button>
+                    <button class="name-btn" onclick="quickBooking('海哥')">海哥</button>
+                    <button class="name-btn" onclick="quickBooking('阿嘉')">阿嘉</button>
+                    <button class="name-btn" onclick="quickBooking('許')">許</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card form-section">
+            <div class="card-content">
+                <h2 class="section-title">臨打報名</h2>
+                <p style="text-align: center; color: #8e8e93; font-size: 15px; margin-bottom: 20px;">
+                    晚上8點後未滿17人才開放
+                </p>
+                
+                <div class="input-group">
+                    <input type="text" id="playerName" placeholder="請輸入你的姓名" maxlength="20" />
+                </div>
+                
+                <button type="button" class="btn" id="bookingBtn" disabled>
+                    立即預約
+                </button>
+            </div>
+        </div>
+
+        <div class="stats-section">
+            <div class="stats-content">
+                已預約人數：<span id="totalCount">0</span> 人
+            </div>
+        </div>
+
+        <div id="bookingTable" class="booking-table hidden">
+            <div class="table-header">📋 出席名單</div>
+            <div id="bookingList"></div>
+        </div>
+
+        <div id="emptyState" class="empty-state">
+            <p>目前沒有人預約</p>
+            <p>成為第一個預約的球友吧！</p>
+        </div>
+    </div>
+
+    <script>
+        console.log('🏸 羅羽翔鷹隊預約系統正在啟動...');
+        
+        const API_BASE_URL = window.location.origin + '/api';
+        console.log('API Base URL:', API_BASE_URL);
+        
+        let bookings = [];
+        let isOnline = false;
+        let nextGameInfo = null;
+
+        // 新增：快速預約功能
+        async function quickBooking(name) {
+            console.log('⚡ 快速預約:', name);
+            
+            if (!isOnline) {
+                alert('目前離線，無法預約');
+                return;
+            }
+
+            // 找到對應的按鈕並暫時禁用
+            const buttons = document.querySelectorAll('.name-btn');
+            const targetButton = Array.from(buttons).find(btn => btn.textContent === name);
+            if (targetButton) {
+                targetButton.disabled = true;
+                targetButton.style.opacity = '0.6';
+            }
+
+            try {
+                const response = await apiRequest('/bookings', {
+                    method: 'POST',
+                    body: JSON.stringify({ name: name })
+                });
+
+                await loadBookings();
+                alert(`${name} 預約成功！`);
+
+            } catch (error) {
+                console.error('快速預約失敗:', error.message);
+                
+                if (error.message.includes('400')) {
+                    alert(`${name} 已經預約過了！`);
+                } else {
+                    alert(`${name} 預約失敗，請重試`);
+                }
+                
+                updateConnectionStatus(false, '預約失敗');
+            } finally {
+                // 重新啟用按鈕
+                if (targetButton) {
+                    targetButton.disabled = false;
+                    targetButton.style.opacity = '1';
+                }
+            }
+        }
+
+        function updateConnectionStatus(online, message = '') {
+            isOnline = online;
+            const statusElement = document.getElementById('connectionStatus');
+            const bookingBtn = document.getElementById('bookingBtn');
+            const nameButtons = document.querySelectorAll('.name-btn');
+            
+            if (online) {
+                statusElement.className = 'connection-status status-online';
+                statusElement.textContent = '🟢 系統已連線';
+                bookingBtn.disabled = false;
+                
+                // 啟用快速預約按鈕
+                nameButtons.forEach(btn => {
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                });
+                
+                console.log('✅ 連線成功');
+            } else {
+                statusElement.className = 'connection-status status-offline';
+                statusElement.textContent = '🔴 連線中斷' + (message ? ' - ' + message : '');
+                bookingBtn.disabled = true;
+                
+                // 禁用快速預約按鈕
+                nameButtons.forEach(btn => {
+                    btn.disabled = true;
+                    btn.style.opacity = '0.5';
+                });
+                
+                console.log('❌ 連線失敗:', message);
+            }
+        }
+
+        async function apiRequest(endpoint, options = {}) {
+            const url = `${API_BASE_URL}${endpoint}`;
+            console.log('🌐 API 請求:', url);
+            
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    },
+                    timeout: 10000,
+                    ...options
+                });
+                
+                console.log('📡 API 回應狀態:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('💥 API 請求失敗:', error);
+                throw error;
+            }
+        }
+
+        async function loadNextGame() {
+            try {
+                const data = await apiRequest('/next-game');
+                nextGameInfo = data.nextGame;
+                
+                const nextGameInfoElement = document.getElementById('nextGameInfo');
+                const displayText = nextGameInfo.isToday ? 
+                    `今天 ${nextGameInfo.dateString} (${nextGameInfo.dayName})` :
+                    `${nextGameInfo.dayName} ${nextGameInfo.dateString}`;
+                
+                nextGameInfoElement.textContent = displayText;
+                
+                const bookingBtn = document.getElementById('bookingBtn');
+                bookingBtn.innerHTML = '立即預約';
+                
+                console.log('📅 下一場羽球:', nextGameInfo);
+            } catch (error) {
+                console.error('載入下一場羽球失敗:', error);
+            }
+        }
+
+        async function loadBookings() {
+            console.log('📥 正在載入預約...');
+            try {
+                const data = await apiRequest('/bookings');
+                bookings = data.bookings || [];
+                console.log('📋 載入的預約:', bookings);
+                updateDisplay();
+                updateConnectionStatus(true);
+            } catch (error) {
+                console.error('載入預約失敗:', error.message);
+                updateConnectionStatus(false, '無法載入資料');
+            }
+        }
+
+        async function addBooking() {
+            console.log('➕ 開始新增預約...');
+            
+            if (!isOnline) {
+                alert('目前離線，無法預約');
+                return;
+            }
+
+            const name = document.getElementById('playerName').value?.trim();
+            
+            if (!name) {
+                alert('請輸入你的姓名');
+                document.getElementById('playerName').focus();
+                return;
+            }
+
+            if (name.length > 20) {
+                alert('姓名不能超過20個字');
+                return;
+            }
+
+            try {
+                const response = await apiRequest('/bookings', {
+                    method: 'POST',
+                    body: JSON.stringify({ name: name })
+                });
+
+                document.getElementById('playerName').value = '';
+                await loadBookings();
+                alert(response.message || '預約成功！');
+
+            } catch (error) {
+                console.error('預約失敗:', error.message);
+                
+                if (error.message.includes('400')) {
+                    try {
+                        const errorResponse = await error.response?.json();
+                        alert(errorResponse?.message || '預約失敗：可能已經預約過了');
+                    } catch {
+                        alert('預約失敗：可能已經預約過了');
+                    }
+                } else {
+                    alert('預約失敗，請重試');
+                }
+                
+                updateConnectionStatus(false, '預約失敗');
+            }
+        }
+
+        async function cancelBooking(id, name) {
+            console.log('❌ 取消預約:', id, name);
+            
+            if (!isOnline) {
+                alert('目前離線，無法取消預約');
+                return;
+            }
+
+            try {
+                if (confirm(`確定要取消 ${name} 的預約嗎？`)) {
+                    await apiRequest(`/bookings/${id}`, {
+                        method: 'DELETE'
+                    });
+
+                    await loadBookings();
+                    alert('預約已取消');
+                }
+            } catch (error) {
+                console.error('取消預約失敗:', error.message);
+                alert('取消預約失敗，請重試');
+                updateConnectionStatus(false, '取消失敗');
+            }
+        }
+
+        function updateDisplay() {
+            console.log('🔄 更新顯示:', bookings.length, '個預約');
+            
+            const totalCount = document.getElementById('totalCount');
+            const bookingTable = document.getElementById('bookingTable');
+            const emptyState = document.getElementById('emptyState');
+            const bookingList = document.getElementById('bookingList');
+
+            totalCount.textContent = bookings.length;
+
+            if (bookings.length === 0) {
+                bookingTable.className = 'booking-table hidden';
+                emptyState.className = 'empty-state';
+                return;
+            }
+
+            bookingTable.className = 'booking-table';
+            emptyState.className = 'empty-state hidden';
+
+            const sortedBookings = [...bookings].sort((a, b) => 
+                new Date(a.createdAt) - new Date(b.createdAt)
+            );
+
+            let htmlContent = '';
+            for (const booking of sortedBookings) {
+                const isToday = nextGameInfo && nextGameInfo.isToday && 
+                               booking.gameDate === nextGameInfo.fullDateString;
+                
+                const itemClass = isToday ? 'booking-item today' : 'booking-item';
+                
+                htmlContent += `
+                    <div class="${itemClass}">
+                        <div class="booking-info">
+                            <div class="booking-name">${booking.name}</div>
+                            <div class="booking-detail">
+                                ${booking.gameDayName} ${booking.gameDateString} ${booking.gameTime}
+                                ${isToday ? ' (今天)' : ''}
+                            </div>
+                        </div>
+                        <button class="cancel-btn" onclick="cancelBooking('${booking.id}', '${booking.name}')">取消</button>
+                    </div>
+                `;
+            }
+            
+            bookingList.innerHTML = htmlContent;
+            console.log('✅ 顯示更新完成');
+        }
+
+        function handleKeyDown(event) {
+            if (event.key === 'Enter') {
+                const activeElement = document.activeElement;
+                if (activeElement && activeElement.id === 'playerName') {
+                    addBooking();
+                }
+            }
+        }
+
+        function startPeriodicSync() {
+            console.log('⏰ 開始定期同步 (每15秒)');
+            setInterval(async () => {
+                if (isOnline) {
+                    try {
+                        await loadNextGame();
+                        await loadBookings();
+                    } catch (error) {
+                        console.error('定期同步失敗:', error);
+                        updateConnectionStatus(false, '同步中斷');
+                    }
+                }
+            }, 15000);
+        }
+
+        async function initializeApp() {
+            console.log('🚀 初始化應用程式...');
+            
+            try {
+                const bookingBtn = document.getElementById('bookingBtn');
+                if (bookingBtn) {
+                    bookingBtn.addEventListener('click', addBooking);
+                }
+                
+                document.addEventListener('keydown', handleKeyDown);
+                
+                await loadNextGame();
+                await loadBookings();
+                startPeriodicSync();
+                
+                console.log('✅ 羅羽翔鷹隊預約系統初始化完成');
+            } catch (error) {
+                console.error('初始化失敗:', error);
+                updateConnectionStatus(false, '初始化失敗');
+            }
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeApp);
+        } else {
+            initializeApp();
+        }
+
+        // 使函數全域可用
+        window.cancelBooking = cancelBooking;
+        window.quickBooking = quickBooking;
+        
+        console.log('📜 羅羽翔鷹隊預約系統腳本載入完成');
+    </script>
+</body>
+</html>
+=== public/index.html ===
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏸 羅羽翔鷹隊</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            background: #f2f2f7;
+            color: #1c1c1e;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 414px;
+            margin: 0 auto;
+            min-height: 100vh;
+            background: #f2f2f7;
+        }
+
+        /* 頂部標題欄 */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 0.5px solid rgba(60, 60, 67, 0.36);
+            padding: 44px 20px 16px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .title {
+            font-size: 34px;
+            font-weight: 700;
+            color: #1c1c1e;
+            margin-bottom: 4px;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: #8e8e93;
+            font-weight: 400;
+        }
+
+        /* 卡片樣式 */
+        .card {
+            background: #ffffff;
+            border-radius: 16px;
+            margin: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+            border: 0.5px solid rgba(60, 60, 67, 0.18);
+            overflow: hidden;
+        }
+
+        .card-content {
+            padding: 24px;
+        }
+
+        /* 下一場羽球卡片 */
+        .next-game-card {
+            background: linear-gradient(135deg, #007aff 0%, #0051d5 100%);
+            color: white;
+            text-align: center;
+        }
+
+        .next-game-title {
+            font-size: 17px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            opacity: 0.9;
+        }
+
+        .next-game-info {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .next-game-time {
+            font-size: 16px;
+            opacity: 0.8;
+        }
+
+        /* 連接狀態 */
+        .connection-status {
+            margin: 16px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            text-align: center;
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        .status-online {
+            background: rgba(52, 199, 89, 0.15);
+            color: #30b46c;
+            border: 1px solid rgba(52, 199, 89, 0.3);
+        }
+
+        .status-offline {
+            background: rgba(255, 59, 48, 0.15);
+            color: #d70015;
+            border: 1px solid rgba(255, 59, 48, 0.3);
+        }
+
+        /* 快速預約區域 */
+        .quick-booking-section {
+            background: #ffffff;
+        }
+
+        .quick-booking-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: #1c1c1e;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .name-buttons-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+
+        .name-btn {
+            background: #f2f2f7;
+            border: 1.5px solid #d1d1d6;
+            border-radius: 12px;
+            padding: 12px 8px;
+            font-size: 15px;
+            font-weight: 600;
+            color: #1c1c1e;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .name-btn:hover {
+            background: #e5e5ea;
+            border-color: #007aff;
+            transform: translateY(-1px);
+        }
+
+        .name-btn:active {
+            transform: translateY(0);
+            background: #d1d1d6;
+        }
+
+        .name-btn:disabled {
+            background: #d1d1d6;
+            color: #8e8e93;
+            cursor: not-allowed;
+            transform: none;
+            opacity: 0.5;
+        }
+
+        /* 表單區域 */
+        .form-section {
+            background: #ffffff;
+        }
+
+        .section-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: #1c1c1e;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .input-group {
+            margin-bottom: 24px;
+        }
+
+        input {
+            width: 100%;
+            padding: 16px;
+            border: 1.5px solid #d1d1d6;
+            border-radius: 12px;
+            font-size: 17px;
+            background: #ffffff;
+            color: #1c1c1e;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #007aff;
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        }
+
+        input::placeholder {
+            color: #8e8e93;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            background: #007aff;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 56px;
+        }
+
+        .btn:hover {
+            background: #0051d5;
+            transform: translateY(-1px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+            background: #004bb8;
+        }
+
+        .btn:disabled {
+            background: #d1d1d6;
+            color: #8e8e93;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* 統計區域 */
+        .stats-section {
+            background: rgba(52, 199, 89, 0.1);
+            border: 1px solid rgba(52, 199, 89, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            margin: 16px;
+        }
+
+        .stats-content {
+            font-size: 20px;
+            font-weight: 600;
+            color: #30b46c;
+        }
+
+        /* 預約列表 */
+        .booking-table {
+            background: #ffffff;
+            border-radius: 16px;
+            overflow: hidden;
+            margin: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+            border: 0.5px solid rgba(60, 60, 67, 0.18);
+        }
+
+        .table-header {
+            background: #f2f2f7;
+            padding: 16px 20px;
+            border-bottom: 0.5px solid rgba(60, 60, 67, 0.18);
+            font-weight: 600;
+            text-align: center;
+            color: #1c1c1e;
+            font-size: 17px;
+        }
+
+        .booking-item {
+            padding: 16px 20px;
+            border-bottom: 0.5px solid rgba(60, 60, 67, 0.18);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.2s ease;
+        }
+
+        .booking-item:last-child {
+            border-bottom: none;
+        }
+
+        .booking-item:active {
+            background: #f2f2f7;
+        }
+
+        .booking-item.today {
+            background: rgba(255, 149, 0, 0.1);
+            border-left: 4px solid #ff9500;
+        }
+
+        .booking-info {
+            flex: 1;
+        }
+
+        .booking-name {
+            font-size: 17px;
+            font-weight: 600;
+            color: #1c1c1e;
+            margin-bottom: 2px;
+        }
+
+        .booking-detail {
+            font-size: 15px;
+            color: #8e8e93;
+        }
+
+        .cancel-btn {
+            background: #ff3b30;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-left: 12px;
+        }
+
+        .cancel-btn:hover {
+            background: #d70015;
+            transform: translateY(-1px);
+        }
+
+        .cancel-btn:active {
+            transform: translateY(0);
+            background: #bf0013;
+        }
+
+        /* 空狀態 */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #8e8e93;
+            margin: 16px;
+        }
+
+        .empty-state p {
+            margin-bottom: 8px;
+            font-size: 17px;
+        }
+
+        /* 隱藏類 */
+        .hidden {
+            display: none;
+        }
+
+        /* 響應式設計 */
+        @media (min-width: 768px) {
+            .container {
+                max-width: 600px;
+                margin: 20px auto;
+                border-radius: 24px;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+                overflow: hidden;
+            }
+
+            .header {
+                padding: 24px 20px 20px;
+                position: static;
+            }
+
+            .name-buttons-grid {
+                grid-template-columns: repeat(6, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .card {
+                margin: 12px;
+            }
+
+            .card-content {
+                padding: 20px;
+            }
+
+            .name-buttons-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 8px;
+            }
+
+            .name-btn {
+                font-size: 14px;
+                padding: 10px 6px;
+                min-height: 44px;
+            }
+
+            .booking-item {
+                flex-direction: column;
+                gap: 12px;
+                align-items: flex-start;
+            }
+
+            .cancel-btn {
+                margin-left: 0;
+                align-self: flex-end;
+            }
+        }
+
+        /* 深色模式支援 */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background: #000000;
+                color: #ffffff;
+            }
+
+            .container {
+                background: #000000;
+            }
+
+            .header {
+                background: rgba(28, 28, 30, 0.95);
+                border-bottom-color: rgba(84, 84, 88, 0.65);
+            }
+
+            .title {
+                color: #ffffff;
+            }
+
+            .card {
+                background: #1c1c1e;
+                border-color: rgba(84, 84, 88, 0.65);
+            }
+
+            .section-title {
+                color: #ffffff;
+            }
+
+            .booking-name {
+                color: #ffffff;
+            }
+
+            .table-header {
+                background: #2c2c2e;
+                color: #ffffff;
+            }
+
+            input {
+                background: #2c2c2e;
+                border-color: #48484a;
+                color: #ffffff;
+            }
+
+            .name-btn {
+                background: #2c2c2e;
+                border-color: #48484a;
+                color: #ffffff;
+            }
+
+            .name-btn:hover {
+                background: #3a3a3c;
+            }
+
+            .booking-item:active {
+                background: #2c2c2e;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">🏸 羅羽翔鷹隊</h1>
+            <div class="subtitle">智能預約系統</div>
+        </div>
+
+        <div class="card next-game-card">
+            <div class="card-content">
+                <div class="next-game-title">可預約場次</div>
+                <div id="nextGameInfo" class="next-game-info">載入中...</div>
+                <div id="nextGameTime" class="next-game-time">上午9:00-12:00</div>
+            </div>
+        </div>
+
+        <div id="connectionStatus" class="connection-status status-offline">
+            🟡 正在連接...
+        </div>
+
+        <div class="card quick-booking-section">
+            <div class="card-content">
+                <div class="quick-booking-title">👥 會員快速預約</div>
+                <div class="name-buttons-grid" id="nameButtonsGrid">
+                    <button class="name-btn" onclick="quickBooking('黃老師')">黃老師</button>
+                    <button class="name-btn" onclick="quickBooking('阿平')">阿平</button>
+                    <button class="name-btn" onclick="quickBooking('我')">我</button>
+                    <button class="name-btn" onclick="quickBooking('皮')">皮</button>
+                    <button class="name-btn" onclick="quickBooking('張清文')">張清文</button>
+                    <button class="name-btn" onclick="quickBooking('文姿')">文姿</button>
+                    <button class="name-btn" onclick="quickBooking('智宇')">智宇</button>
+                    <button class="name-btn" onclick="quickBooking('克拉克')">克拉克</button>
+                    <button class="name-btn" onclick="quickBooking('Ben')">Ben</button>
+                    <button class="name-btn" onclick="quickBooking('雄')">雄</button>
+                    <button class="name-btn" onclick="quickBooking('明正')">明正</button>
+                    <button class="name-btn" onclick="quickBooking('曜竹')">曜竹</button>
+                    <button class="name-btn" onclick="quickBooking('阿生')">阿生</button>
+                    <button class="name-btn" onclick="quickBooking('哲維')">哲維</button>
+                    <button class="name-btn" onclick="quickBooking('查理王')">查理王</button>
+                    <button class="name-btn" onclick="quickBooking('🦅')">🦅</button>
+                    <button class="name-btn" onclick="quickBooking('皮')">皮</button>
+                    <button class="name-btn" onclick="quickBooking('曜竹')">曜竹</button>
+                    <button class="name-btn" onclick="quickBooking('怡姍')">怡姍</button>
+                    <button class="name-btn" onclick="quickBooking('控')">控</button>
+                    <button class="name-btn" onclick="quickBooking('彥皓')">彥皓</button>
+                    <button class="name-btn" onclick="quickBooking('海哥')">海哥</button>
+                    <button class="name-btn" onclick="quickBooking('阿嘉')">阿嘉</button>
+                    <button class="name-btn" onclick="quickBooking('許')">許</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card form-section">
+            <div class="card-content">
+                <h2 class="section-title">臨打報名</h2>
+                <p style="text-align: center; color: #8e8e93; font-size: 15px; margin-bottom: 20px;">
+                    晚上8點後未滿17人才開放
+                </p>
+                
+                <div class="input-group">
+                    <input type="text" id="playerName" placeholder="請輸入你的姓名" maxlength="20" />
+                </div>
+                
+                <button type="button" class="btn" id="bookingBtn" disabled>
+                    立即預約
+                </button>
+            </div>
+        </div>
+
+        <div class="stats-section">
+            <div class="stats-content">
+                已預約人數：<span id="totalCount">0</span> 人
+            </div>
+        </div>
+
+        <div id="bookingTable" class="booking-table hidden">
+            <div class="table-header">📋 出席名單</div>
+            <div id="bookingList"></div>
+        </div>
+
+        <div id="emptyState" class="empty-state">
+            <p>目前沒有人預約</p>
+            <p>成為第一個預約的球友吧！</p>
+        </div>
+    </div>
+
+    <script>
+        console.log('🏸 羅羽翔鷹隊預約系統正在啟動...');
+        
+        const API_BASE_URL = window.location.origin + '/api';
+        console.log('API Base URL:', API_BASE_URL);
+        
+        let bookings = [];
+        let isOnline = false;
+        let nextGameInfo = null;
+
+        // 新增：快速預約功能
+        async function quickBooking(name) {
+            console.log('⚡ 快速預約:', name);
+            
+            if (!isOnline) {
+                alert('目前離線，無法預約');
+                return;
+            }
+
+            // 找到對應的按鈕並暫時禁用
+            const buttons = document.querySelectorAll('.name-btn');
+            const targetButton = Array.from(buttons).find(btn => btn.textContent === name);
+            if (targetButton) {
+                targetButton.disabled = true;
+                targetButton.style.opacity = '0.6';
+            }
+
+            try {
+                const response = await apiRequest('/bookings', {
+                    method: 'POST',
+                    body: JSON.stringify({ name: name })
+                });
+
+                await loadBookings();
+                alert(`${name} 預約成功！`);
+
+            } catch (error) {
+                console.error('快速預約失敗:', error.message);
+                
+                if (error.message.includes('400')) {
+                    alert(`${name} 已經預約過了！`);
+                } else {
+                    alert(`${name} 預約失敗，請重試`);
+                }
+                
+                updateConnectionStatus(false, '預約失敗');
+            } finally {
+                // 重新啟用按鈕
+                if (targetButton) {
+                    targetButton.disabled = false;
+                    targetButton.style.opacity = '1';
+                }
+            }
+        }
+
+        function updateConnectionStatus(online, message = '') {
+            isOnline = online;
+            const statusElement = document.getElementById('connectionStatus');
+            const bookingBtn = document.getElementById('bookingBtn');
+            const nameButtons = document.querySelectorAll('.name-btn');
+            
+            if (online) {
+                statusElement.className = 'connection-status status-online';
+                statusElement.textContent = '🟢 系統已連線';
+                bookingBtn.disabled = false;
+                
+                // 啟用快速預約按鈕
+                nameButtons.forEach(btn => {
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                });
+                
+                console.log('✅ 連線成功');
+            } else {
+                statusElement.className = 'connection-status status-offline';
+                statusElement.textContent = '🔴 連線中斷' + (message ? ' - ' + message : '');
+                bookingBtn.disabled = true;
+                
+                // 禁用快速預約按鈕
+                nameButtons.forEach(btn => {
+                    btn.disabled = true;
+                    btn.style.opacity = '0.5';
+                });
+                
+                console.log('❌ 連線失敗:', message);
+            }
+        }
+
+        async function apiRequest(endpoint, options = {}) {
+            const url = `${API_BASE_URL}${endpoint}`;
+            console.log('🌐 API 請求:', url);
+            
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    },
+                    timeout: 10000,
+                    ...options
+                });
+                
+                console.log('📡 API 回應狀態:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('💥 API 請求失敗:', error);
+                throw error;
+            }
+        }
+
+        async function loadNextGame() {
+            try {
+                const data = await apiRequest('/next-game');
+                nextGameInfo = data.nextGame;
+                
+                const nextGameInfoElement = document.getElementById('nextGameInfo');
+                const displayText = nextGameInfo.isToday ? 
+                    `今天 ${nextGameInfo.dateString} (${nextGameInfo.dayName})` :
+                    `${nextGameInfo.dayName} ${nextGameInfo.dateString}`;
+                
+                nextGameInfoElement.textContent = displayText;
+                
+                const bookingBtn = document.getElementById('bookingBtn');
+                bookingBtn.innerHTML = '立即預約';
+                
+                console.log('📅 下一場羽球:', nextGameInfo);
+            } catch (error) {
+                console.error('載入下一場羽球失敗:', error);
+            }
+        }
+
+        async function loadBookings() {
+            console.log('📥 正在載入預約...');
+            try {
+                const data = await apiRequest('/bookings');
+                bookings = data.bookings || [];
+                console.log('📋 載入的預約:', bookings);
+                updateDisplay();
+                updateConnectionStatus(true);
+            } catch (error) {
+                console.error('載入預約失敗:', error.message);
+                updateConnectionStatus(false, '無法載入資料');
+            }
+        }
+
+        async function addBooking() {
+            console.log('➕ 開始新增預約...');
+            
+            if (!isOnline) {
+                alert('目前離線，無法預約');
+                return;
+            }
+
+            const name = document.getElementById('playerName').value?.trim();
+            
+            if (!name) {
+                alert('請輸入你的姓名');
+                document.getElementById('playerName').focus();
+                return;
+            }
+
+            if (name.length > 20) {
+                alert('姓名不能超過20個字');
+                return;
+            }
+
+            try {
+                const response = await apiRequest('/bookings', {
+                    method: 'POST',
+                    body: JSON.stringify({ name: name })
+                });
+
+                document.getElementById('playerName').value = '';
+                await loadBookings();
+                alert(response.message || '預約成功！');
+
+            } catch (error) {
+                console.error('預約失敗:', error.message);
+                
+                if (error.message.includes('400')) {
+                    try {
+                        const errorResponse = await error.response?.json();
+                        alert(errorResponse?.message || '預約失敗：可能已經預約過了');
+                    } catch {
+                        alert('預約失敗：可能已經預約過了');
+                    }
+                } else {
+                    alert('預約失敗，請重試');
+                }
+                
+                updateConnectionStatus(false, '預約失敗');
+            }
+        }
+
+        async function cancelBooking(id, name) {
+            console.log('❌ 取消預約:', id, name);
+            
+            if (!isOnline) {
+                alert('目前離線，無法取消預約');
+                return;
+            }
+
+            try {
+                if (confirm(`確定要取消 ${name} 的預約嗎？`)) {
+                    await apiRequest(`/bookings/${id}`, {
+                        method: 'DELETE'
+                    });
+
+                    await loadBookings();
+                    alert('預約已取消');
+                }
+            } catch (error) {
+                console.error('取消預約失敗:', error.message);
+                alert('取消預約失敗，請重試');
+                updateConnectionStatus(false, '取消失敗');
+            }
+        }
+
+        function updateDisplay() {
+            console.log('🔄 更新顯示:', bookings.length, '個預約');
+            
+            const totalCount = document.getElementById('totalCount');
+            const bookingTable = document.getElementById('bookingTable');
+            const emptyState = document.getElementById('emptyState');
+            const bookingList = document.getElementById('bookingList');
+
+            totalCount.textContent = bookings.length;
+
+            if (bookings.length === 0) {
+                bookingTable.className = 'booking-table hidden';
+                emptyState.className = 'empty-state';
+                return;
+            }
+
+            bookingTable.className = 'booking-table';
+            emptyState.className = 'empty-state hidden';
+
+            const sortedBookings = [...bookings].sort((a, b) => 
+                new Date(a.createdAt) - new Date(b.createdAt)
+            );
+
+            let htmlContent = '';
+            for (const booking of sortedBookings) {
+                const isToday = nextGameInfo && nextGameInfo.isToday && 
+                               booking.gameDate === nextGameInfo.fullDateString;
+                
+                const itemClass = isToday ? 'booking-item today' : 'booking-item';
+                
+                htmlContent += `
+                    <div class="${itemClass}">
+                        <div class="booking-info">
+                            <div class="booking-name">${booking.name}</div>
+                            <div class="booking-detail">
+                                ${booking.gameDayName} ${booking.gameDateString} ${booking.gameTime}
+                                ${isToday ? ' (今天)' : ''}
+                            </div>
+                        </div>
+                        <button class="cancel-btn" onclick="cancelBooking('${booking.id}', '${booking.name}')">取消</button>
+                    </div>
+                `;
+            }
+            
+            bookingList.innerHTML = htmlContent;
+            console.log('✅ 顯示更新完成');
+        }
+
+        function handleKeyDown(event) {
+            if (event.key === 'Enter') {
+                const activeElement = document.activeElement;
+                if (activeElement && activeElement.id === 'playerName') {
+                    addBooking();
+                }
+            }
+        }
+
+        function startPeriodicSync() {
+            console.log('⏰ 開始定期同步 (每15秒)');
+            setInterval(async () => {
+                if (isOnline) {
+                    try {
+                        await loadNextGame();
+                        await loadBookings();
+                    } catch (error) {
+                        console.error('定期同步失敗:', error);
+                        updateConnectionStatus(false, '同步中斷');
+                    }
+                }
+            }, 15000);
+        }
+
+        async function initializeApp() {
+            console.log('🚀 初始化應用程式...');
+            
+            try {
+                const bookingBtn = document.getElementById('bookingBtn');
+                if (bookingBtn) {
+                    bookingBtn.addEventListener('click', addBooking);
+                }
+                
+                document.addEventListener('keydown', handleKeyDown);
+                
+                await loadNextGame();
+                await loadBookings();
+                startPeriodicSync();
+                
+                console.log('✅ 羅羽翔鷹隊預約系統初始化完成');
+            } catch (error) {
+                console.error('初始化失敗:', error);
+                updateConnectionStatus(false, '初始化失敗');
+            }
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeApp);
+        } else {
+            initializeApp();
+        }
+
+        // 使函數全域可用
+        window.cancelBooking = cancelBooking;
+        window.quickBooking = quickBooking;
+        
+        console.log('📜 羅羽翔鷹隊預約系統腳本載入完成');
+    </script>
+</body>
+</html>
+=== bookings.json ===
+{
+  "bookings": [
+    {
+      "id": "1753343868968hegde9lhz",
+      "name": "4ri0",
+      "month": 10,
+      "day": 1,
+      "time": "15:02",
+      "createdAt": "2025-07-24T07:57:48.968Z",
+      "ip": "::1"
+    }
+  ],
+  "lastUpdated": "2025-07-24T07:57:48.968Z",
+  "count": 1
+}

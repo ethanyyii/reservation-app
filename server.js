@@ -51,9 +51,8 @@ async function writeBookings(bookings) {
 // 獲取台灣時間
 function getTaiwanTime() {
     const now = new Date();
-    // 轉換為台灣時間 (UTC+8)
-    const taiwanTime = new Date(now.getTime() + (8 * 60 * 60 * 1000));
-    return taiwanTime;
+    // 使用更準確的時區轉換
+    return new Date(now.toLocaleString("en-US", {timeZone: "Asia/Taipei"}));
 }
 
 // 檢查是否為預設會員
@@ -283,8 +282,10 @@ app.get('/api/bookings', async (req, res) => {
 app.post('/api/bookings', async (req, res) => {
     try {
         const { name } = req.body;
+        console.log('🔍 收到預約請求:', { name, body: req.body });
         
         if (!name || !name.trim()) {
+            console.log('❌ 名字為空');
             return res.status(400).json({ success: false, message: '請填寫球友姓名' });
         }
         
@@ -301,9 +302,11 @@ app.post('/api/bookings', async (req, res) => {
         );
         
         if (duplicate) {
+            console.log('❌ 重複預約:', name);
             return res.status(400).json({
                 success: false,
-                message: `${name} 已經預約過這場羽球了！`
+                message: `${name} 已經預約過這場羽球了！`,
+                code: 'DUPLICATE_BOOKING'
             });
         }
         
@@ -320,7 +323,8 @@ app.post('/api/bookings', async (req, res) => {
                 return res.status(400).json({
                     success: false,
                     message: `臨打報名限制：${timeCheck.reason}`,
-                    code: timeCheck.code
+                    code: timeCheck.code,
+                    isTimeRestriction: true
                 });
             } else {
                 console.log(`✅ 臨打報名允許: ${name} - ${timeCheck.reason}`);
