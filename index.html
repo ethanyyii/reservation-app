@@ -749,7 +749,8 @@
                     alert(`${name} 預約失敗，請重試`);
                 }
                 
-                updateConnectionStatus(false, '預約失敗');
+                // 不要設為離線，因為可能只是業務邏輯錯誤
+                // updateConnectionStatus(false, '預約失敗');
             } finally {
                 // 重新啟用按鈕
                 if (targetButton) {
