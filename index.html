@@ -740,17 +740,12 @@
             } catch (error) {
                 console.error('快速預約失敗:', error);
                 
-                // 改進錯誤處理
+                // 正確的錯誤處理
                 if (error.data && error.data.message) {
                     alert(error.data.message);
-                } else if (error.message.includes('400')) {
-                    alert(`${name} 已經預約過了！`);
                 } else {
                     alert(`${name} 預約失敗，請重試`);
                 }
-                
-                // 不要設為離線，因為可能只是業務邏輯錯誤
-                // updateConnectionStatus(false, '預約失敗');
             } finally {
                 // 重新啟用按鈕
                 if (targetButton) {
@@ -1010,15 +1005,9 @@
             } catch (error) {
                 console.error('預約失敗:', error);
                 
-                // 改進錯誤處理
+                // 正確的錯誤處理
                 if (error.data && error.data.message) {
-                    if (error.data.isTimeRestriction) {
-                        alert(`臨打報名限制：${error.data.message.replace('臨打報名限制：', '')}`);
-                    } else {
-                        alert(error.data.message);
-                    }
-                } else if (error.message.includes('400')) {
-                    alert('預約失敗：可能已經預約過了或時間限制');
+                    alert(error.data.message);
                 } else {
                     alert('預約失敗，請重試');
                 }
