@@ -740,12 +740,8 @@
             } catch (error) {
                 console.error('快速預約失敗:', error);
                 
-                // 正確的錯誤處理
-                if (error.data && error.data.message) {
-                    alert(error.data.message);
-                } else {
-                    alert(`${name} 預約失敗，請重試`);
-                }
+                // 顯示具體的錯誤訊息
+                alert(error.message || `${name} 預約失敗，請重試`);
             } finally {
                 // 重新啟用按鈕
                 if (targetButton) {
@@ -774,8 +770,7 @@
                 }
             } catch (error) {
                 console.error('取消預約失敗:', error);
-                alert('取消預約失敗，請重試');
-                updateConnectionStatus(false, '取消失敗');
+                alert(error.message || '取消預約失敗，請重試');
             }
         }
 
@@ -881,7 +876,6 @@
                 // 更新臨打報名UI
                 updateCustomReservationUI();
                 
-                console.log('✅ 連線成功');
             } else {
                 statusElement.className = 'connection-status status-offline';
                 statusElement.textContent = '🔴 連線中斷' + (message ? ' - ' + message : '');
@@ -899,7 +893,7 @@
             }
         }
 
-        // 改進的 API 請求函數
+        // 修正的 API 請求函數 - 正確處理 JSON 錯誤
         async function apiRequest(endpoint, options = {}) {
             const url = `${API_BASE_URL}${endpoint}`;
             console.log('🌐 API 請求:', url);
@@ -916,11 +910,19 @@
                 
                 console.log('📡 API 回應狀態:', response.status);
                 
-                const data = await response.json();
+                let data;
+                try {
+                    data = await response.json();
+                    console.log('📋 API 回應數據:', data);
+                } catch (parseError) {
+                    console.error('JSON 解析失敗:', parseError);
+                    throw new Error('服務器回應格式錯誤');
+                }
                 
                 if (!response.ok) {
-                    // 創建包含回應數據的錯誤對象
-                    const error = new Error(`HTTP error! status: ${response.status}`);
+                    // 使用服務器返回的錯誤訊息
+                    const errorMessage = data.message || `HTTP error! status: ${response.status}`;
+                    const error = new Error(errorMessage);
                     error.status = response.status;
                     error.data = data;
                     throw error;
@@ -1005,12 +1007,8 @@
             } catch (error) {
                 console.error('預約失敗:', error);
                 
-                // 正確的錯誤處理
-                if (error.data && error.data.message) {
-                    alert(error.data.message);
-                } else {
-                    alert('預約失敗，請重試');
-                }
+                // 顯示具體的錯誤訊息
+                alert(error.message || '預約失敗，請重試');
                 
                 // 重新載入數據以確保狀態同步
                 await loadBookings();
